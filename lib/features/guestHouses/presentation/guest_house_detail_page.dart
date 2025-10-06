@@ -238,7 +238,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
                 const SizedBox(height: 8),
                 const RoomFilter(),
                 const SizedBox(height: 8),
-                _buildRoomsList(padding, fontSizeSubtitle, isMobile, ref),
+                _buildRoomsList(isOwner,padding, fontSizeSubtitle, isMobile, ref),
               ],
             ),
           ),
@@ -259,6 +259,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
   }
 
   Widget _buildRoomsList(
+    bool isOwner,
     double padding,
     double fontSizeSubtitle,
     bool isMobile,
@@ -290,6 +291,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
         itemCount: rooms.length,
         itemBuilder: (context, index) {
           return RoomCard(
+            isOwner:isOwner,
             room: rooms[index],
             padding: padding / 2,
             fontSizeSubtitle: fontSizeSubtitle,

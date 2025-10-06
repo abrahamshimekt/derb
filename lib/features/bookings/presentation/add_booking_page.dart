@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:derb/features/bookings/application/bookings_controller.dart';
@@ -112,6 +113,7 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
       return 'End date must be after start date.';
     if (_idImage == null) return 'Please upload an identification card.';
     if (_receiptImage == null) return 'Please upload a payment receipt.';
+    if (_transactionIdController.text.isEmpty) return 'Please enter a transaction ID.';
     return null;
   }
 
@@ -354,7 +356,7 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
       ),
       subtitle: Text(
         value == null
-            ? 'Select $title.toLowerCase()'
+            ? 'Select ${title.toLowerCase()}'
             : DateFormat('MMM dd, yyyy').format(value),
         style: GoogleFonts.poppins(fontSize: fontSize - 2),
       ),
@@ -367,7 +369,7 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
     return TextFormField(
       controller: _transactionIdController,
       decoration: InputDecoration(
-        labelText: 'Transaction ID (Optional)',
+        labelText: 'Transaction ID',
         labelStyle: GoogleFonts.poppins(
           fontSize: fontSize - 2,
           color: Colors.grey[600],
@@ -375,6 +377,12 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       style: GoogleFonts.poppins(fontSize: fontSize - 2),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter a transaction ID.';
+        }
+        return null;
+      },
     );
   }
 
@@ -386,19 +394,47 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
     required double fontSize,
     required bool isMobile,
   }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(fontSize: fontSize, color: Colors.grey[600]),
-      ),
-      subtitle: Text(
-        file == null ? 'No file selected' : file.name,
-        style: GoogleFonts.poppins(fontSize: fontSize - 2),
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: const Icon(Icons.upload_file, color: Color(0xFF1C9826)),
-      onTap: onTap,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            title,
+            style: GoogleFonts.poppins(fontSize: fontSize, color: Colors.grey[600]),
+          ),
+          subtitle: Text(
+            file == null ? 'No file selected' : file.name,
+            style: GoogleFonts.poppins(fontSize: fontSize - 2),
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.upload_file, color: Color(0xFF1C9826)),
+          onTap: onTap,
+        ),
+        if (file != null) ...[
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              height: isMobile ? 100 : 120,
+              width: isMobile ? 100 : 120,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Image.file(
+                File(file.path),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.error_outline,
+                  color: Colors.redAccent,
+                  size: 48,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -435,6 +471,9 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
           onPressed: bookingState is BookingsLoading
               ? null
               : () async {
+                  if (!_formKey.currentState!.validate()) {
+                    return;
+                  }
                   final validationError = _validateForm();
                   if (validationError != null || !isAuthenticated) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -464,9 +503,7 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
                           startDate: _startDate!,
                           endDate: _endDate!,
                           totalPrice: totalPrice,
-                          transactionId: _transactionIdController.text.isEmpty
-                              ? null
-                              : _transactionIdController.text,
+                          transactionId: _transactionIdController.text,
                           idImage: _idImage!,
                           receiptImage: _receiptImage!,
                         );
