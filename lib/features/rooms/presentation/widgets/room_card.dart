@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:derb/features/bookings/presentation/add_booking_page.dart';
-import 'package:derb/features/guestHouses/data/models/room.dart';
+import 'package:derb/features/rooms/data/models/room.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';

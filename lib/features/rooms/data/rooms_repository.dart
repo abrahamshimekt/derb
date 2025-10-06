@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/models/room.dart';
+import 'models/room.dart';
 import '../../../core/failures.dart';
 import '../../../core/supabase_client.dart';
 import 'dart:developer' as developer;

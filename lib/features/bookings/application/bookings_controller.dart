@@ -1,5 +1,5 @@
 import 'package:derb/features/bookings/data/bookings_repository.dart';
-import 'package:derb/features/guestHouses/data/models/room.dart';
+import 'package:derb/features/rooms/data/models/room.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/failures.dart';

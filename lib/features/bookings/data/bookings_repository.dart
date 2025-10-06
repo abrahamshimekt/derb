@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:derb/core/failures.dart';
 import 'package:derb/core/supabase_client.dart';
-import 'package:derb/features/guestHouses/data/models/room.dart';
+import 'package:derb/features/rooms/data/models/room.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:developer' as developer;

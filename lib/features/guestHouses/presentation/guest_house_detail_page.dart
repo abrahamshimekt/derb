@@ -1,14 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:derb/features/guestHouses/presentation/widgets/add_room_dialog.dart';
-import 'package:derb/features/guestHouses/presentation/widgets/room_card.dart';
-import 'package:derb/features/guestHouses/presentation/widgets/rooms_filter.dart';
-import 'package:derb/features/guestHouses/presentation/widgets/rooms_shimmer.dart';
+import 'package:derb/features/rooms/presentation/widgets/add_room_dialog.dart';
+import 'package:derb/features/rooms/presentation/widgets/room_card.dart';
+import 'package:derb/features/rooms/presentation/widgets/rooms_filter.dart';
+import 'package:derb/features/rooms/presentation/widgets/rooms_shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../auth/application/auth_controller.dart';
-import '../application/rooms_controller.dart';
+import '../../rooms/application/rooms_controller.dart';
 import '../data/models/guest_house.dart';
 
 class GuestHouseDetailPage extends ConsumerStatefulWidget {
