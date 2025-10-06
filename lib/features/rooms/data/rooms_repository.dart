@@ -22,7 +22,10 @@ abstract class IRoomsRepository {
     required String guestHouseId,
     required List<XFile> images,
   });
-  Stream<List<Room>> subscribeToRooms({required String guestHouseId});
+  void subscribe({
+    required String guestHouseId,
+    required void Function(List<Room> rooms) onUpdate,
+  });
   void unsubscribe();
 }
 
@@ -104,17 +107,30 @@ class SupabaseRoomsRepository implements IRoomsRepository {
   }
 
   @override
-  Stream<List<Room>> subscribeToRooms({required String guestHouseId}) {
-    try {
-      final tableFilter = 'rooms:guest_house_id=eq.$guestHouseId';
-      return _client
-          .from(tableFilter)
-          .stream(primaryKey: ['id'])
-          .map((data) => data.map((json) => Room.fromJson(json)).toList());
-    } catch (e, stackTrace) {
-      developer.log('Error setting up subscription: $e', stackTrace: stackTrace);
-      throw mapSupabaseError(e);
-    }
+  void subscribe({
+    required String guestHouseId,
+    required void Function(List<Room> rooms) onUpdate,
+  }) {
+    // IMPORTANT: filter with .eq instead of putting it in the table string.
+    _subscription = _client
+        .from('rooms')
+        .stream(primaryKey: ['id'])
+        .eq('guest_house_id', guestHouseId)
+        .listen(
+      (data) {
+        try {
+          final rooms = data
+              .map((e) => Room.fromJson(e))
+              .toList();
+          onUpdate(rooms);
+        } catch (e) {
+          developer.log('Rooms stream parse error: $e');
+        }
+      },
+      onError: (err) {
+        developer.log('Rooms stream error: $err');
+      },
+    );
   }
 
   @override

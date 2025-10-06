@@ -7,12 +7,14 @@ import 'package:shimmer/shimmer.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class RoomCard extends StatelessWidget {
+  final bool isOwner;
   final Room room;
   final double padding;
   final double fontSizeSubtitle;
 
   const RoomCard({
     super.key,
+    required this.isOwner,
     required this.room,
     required this.padding,
     required this.fontSizeSubtitle,
@@ -187,52 +189,54 @@ class RoomCard extends StatelessWidget {
                 ),
               const SizedBox(height: 12),
               // Book Now Button
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: room.status =="available"
-                      ? () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => NewBookingPage(bedroom: room),
-                            ),
-                          );
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
+              if (!isOwner)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: room.status == "available"
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    NewBookingPage(bedroom: room),
+                              ),
+                            );
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      elevation: 2,
                     ),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 16 : 20,
-                        vertical: isMobile ? 10 : 12,
-                      ),
-                      constraints: const BoxConstraints(minWidth: 120),
-                      child: Text(
-                        'Book Now',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: adjustedFontSize - 2,
-                          fontWeight: FontWeight.w600,
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
                         ),
-                        textAlign: TextAlign.center,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 16 : 20,
+                          vertical: isMobile ? 10 : 12,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 120),
+                        child: Text(
+                          'Book Now',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: adjustedFontSize - 2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

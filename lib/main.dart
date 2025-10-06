@@ -1,4 +1,4 @@
-import 'package:derb/features/bookings/presentation/bookings_page.dart';
+import 'package:derb/features/bookings/presentation/books_page.dart';
 import 'package:derb/features/guestHouses/presentation/guest_houses_page.dart';
 import 'package:derb/features/profile/presentation/profile_page.dart';
 import 'package:flutter/material.dart';

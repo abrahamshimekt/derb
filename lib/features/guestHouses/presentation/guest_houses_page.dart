@@ -259,486 +259,488 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
             }
           }
 
-          return Scaffold(
-            body: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF1C9826).withOpacity(0.05),
-                    Colors.white.withOpacity(0.9),
-                  ],
+          return SafeArea(
+            child: Scaffold(
+              body: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF1C9826).withOpacity(0.05),
+                      Colors.white.withOpacity(0.9),
+                    ],
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  // Fixed AppBar and Search Bar
-                  Material(
-                    elevation: 4,
-                    shadowColor: Colors.black.withOpacity(0.1),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.95),
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey[200]!,
-                            width: 1,
+                child: Column(
+                  children: [
+                    // Fixed AppBar and Search Bar
+                    Material(
+                      elevation: 4,
+                      shadowColor: Colors.black.withOpacity(0.1),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.95),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey[200]!,
+                              width: 1,
+                            ),
                           ),
                         ),
-                      ),
-                      child: Column(
-                        children: [
-                          AppBar(
-                            backgroundColor: Colors.transparent,
-                            elevation: 0,
-                            title: Text(
-                              'Guest Houses',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w700,
-                                fontSize: fontSizeTitle,
-                                foreground: Paint()
-                                  ..shader =
-                                      const LinearGradient(
-                                        colors: [
-                                          Color(0xFF1C9826),
-                                          Color(0xFF4CAF50),
-                                        ],
-                                      ).createShader(
-                                        const Rect.fromLTWH(0, 0, 200, 20),
-                                      ),
-                              ),
-                            ),
-                            centerTitle: true,
-                            actions: [
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: GestureDetector(
-                                  onTapDown: (_) =>
-                                      _filterAnimationController.forward(),
-                                  onTapUp: (_) =>
-                                      _filterAnimationController.reverse(),
-                                  child: AnimatedBuilder(
-                                    animation: _filterAnimationController,
-                                    builder: (context, child) => Transform.rotate(
-                                      angle:
-                                          _filterRotation.value * 2 * 3.14159,
-                                      child: IconButton(
-                                        icon: Icon(
-                                          Icons.filter_list_rounded,
-                                          size: isMobile ? 26 : 30,
-                                          color: const Color(0xFF1C9826),
+                        child: Column(
+                          children: [
+                            AppBar(
+                              backgroundColor: Colors.transparent,
+                              elevation: 0,
+                              title: Text(
+                                'Guest Houses',
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: fontSizeTitle,
+                                  foreground: Paint()
+                                    ..shader =
+                                        const LinearGradient(
+                                          colors: [
+                                            Color(0xFF1C9826),
+                                            Color(0xFF4CAF50),
+                                          ],
+                                        ).createShader(
+                                          const Rect.fromLTWH(0, 0, 200, 20),
                                         ),
-                                        onPressed: () => _showFilterDialog(
-                                          ref.watch(guestHousesControllerProvider)
-                                                  is GuestHousesLoaded
-                                              ? (ref.watch(
-                                                          guestHousesControllerProvider,
-                                                        )
-                                                        as GuestHousesLoaded)
-                                                    .guestHouses
-                                              : [],
+                                ),
+                              ),
+                              centerTitle: true,
+                              actions: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: GestureDetector(
+                                    onTapDown: (_) =>
+                                        _filterAnimationController.forward(),
+                                    onTapUp: (_) =>
+                                        _filterAnimationController.reverse(),
+                                    child: AnimatedBuilder(
+                                      animation: _filterAnimationController,
+                                      builder: (context, child) => Transform.rotate(
+                                        angle:
+                                            _filterRotation.value * 2 * 3.14159,
+                                        child: IconButton(
+                                          icon: Icon(
+                                            Icons.filter_list_rounded,
+                                            size: isMobile ? 26 : 30,
+                                            color: const Color(0xFF1C9826),
+                                          ),
+                                          onPressed: () => _showFilterDialog(
+                                            ref.watch(guestHousesControllerProvider)
+                                                    is GuestHousesLoaded
+                                                ? (ref.watch(
+                                                            guestHousesControllerProvider,
+                                                          )
+                                                          as GuestHousesLoaded)
+                                                      .guestHouses
+                                                : [],
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              padding,
-                              8,
-                              padding,
-                              16,
+                              ],
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                                child: TextField(
-                                  controller: _searchController,
-                                  decoration: InputDecoration(
-                                    hintText: 'Search Guest Houses...',
-                                    prefixIcon: Icon(
-                                      Icons.search_rounded,
-                                      color: const Color(0xFF1C9826),
-                                      size: isMobile ? 22 : 24,
-                                    ),
-                                    suffixIcon: AnimatedOpacity(
-                                      opacity: _searchController.text.isNotEmpty
-                                          ? 1.0
-                                          : 0.0,
-                                      duration: const Duration(
-                                        milliseconds: 200,
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                padding,
+                                8,
+                                padding,
+                                16,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                  child: TextField(
+                                    controller: _searchController,
+                                    decoration: InputDecoration(
+                                      hintText: 'Search Guest Houses...',
+                                      prefixIcon: Icon(
+                                        Icons.search_rounded,
+                                        color: const Color(0xFF1C9826),
+                                        size: isMobile ? 22 : 24,
                                       ),
-                                      child: IconButton(
-                                        icon: Icon(
-                                          Icons.clear_rounded,
-                                          color: const Color(0xFF1C9826),
-                                          size: isMobile ? 22 : 24,
+                                      suffixIcon: AnimatedOpacity(
+                                        opacity: _searchController.text.isNotEmpty
+                                            ? 1.0
+                                            : 0.0,
+                                        duration: const Duration(
+                                          milliseconds: 200,
                                         ),
-                                        onPressed: () {
-                                          _searchController.clear();
-                                          setState(() {});
-                                        },
+                                        child: IconButton(
+                                          icon: Icon(
+                                            Icons.clear_rounded,
+                                            color: const Color(0xFF1C9826),
+                                            size: isMobile ? 22 : 24,
+                                          ),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            setState(() {});
+                                          },
+                                        ),
                                       ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.white.withOpacity(0.9),
                                     ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: isMobile ? 14 : 16,
                                     ),
-                                    filled: true,
-                                    fillColor: Colors.white.withOpacity(0.9),
+                                    onChanged: (value) => _debouncer.add(value),
                                   ),
-                                  style: GoogleFonts.poppins(
-                                    fontSize: isMobile ? 14 : 16,
-                                  ),
-                                  onChanged: (value) => _debouncer.add(value),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  // Scrollable Content
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: () {
-                        return _refreshData(userId, role);
-                      },
-                      color: const Color(0xFF1C9826),
-                      backgroundColor: Colors.white,
-                      child: CustomScrollView(
-                        slivers: [
-                          SliverPadding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: padding,
-                              vertical: 16,
-                            ),
-                            sliver:
-                                ref.watch(guestHousesControllerProvider)
-                                    is GuestHousesLoading
-                                ? GuestHousesShimmer(
-                                    width: MediaQuery.of(context).size.width,
-                                    isMobile: isMobile,
-                                    isTablet: isTablet,
-                                  )
-                                : ref.watch(guestHousesControllerProvider)
-                                      is GuestHousesError
-                                ? SliverToBoxAdapter(
-                                    child: Center(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.error_outline_rounded,
-                                            size: isMobile ? 40 : 48,
-                                            color: Colors.redAccent,
-                                          ),
-                                          const SizedBox(height: 16),
-                                          Text(
-                                            (ref.watch(
+                    // Scrollable Content
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () {
+                          return _refreshData(userId, role);
+                        },
+                        color: const Color(0xFF1C9826),
+                        backgroundColor: Colors.white,
+                        child: CustomScrollView(
+                          slivers: [
+                            SliverPadding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: padding,
+                                vertical: 16,
+                              ),
+                              sliver:
+                                  ref.watch(guestHousesControllerProvider)
+                                      is GuestHousesLoading
+                                  ? GuestHousesShimmer(
+                                      width: MediaQuery.of(context).size.width,
+                                      isMobile: isMobile,
+                                      isTablet: isTablet,
+                                    )
+                                  : ref.watch(guestHousesControllerProvider)
+                                        is GuestHousesError
+                                  ? SliverToBoxAdapter(
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.error_outline_rounded,
+                                              size: isMobile ? 40 : 48,
+                                              color: Colors.redAccent,
+                                            ),
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              (ref.watch(
+                                                        guestHousesControllerProvider,
+                                                      )
+                                                      as GuestHousesError)
+                                                  .message,
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.redAccent,
+                                                fontSize: isMobile ? 14 : 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                            const SizedBox(height: 16),
+                                            if ((ref.watch(
                                                       guestHousesControllerProvider,
                                                     )
                                                     as GuestHousesError)
-                                                .message,
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.redAccent,
-                                              fontSize: isMobile ? 14 : 16,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(height: 16),
-                                          if ((ref.watch(
-                                                    guestHousesControllerProvider,
-                                                  )
-                                                  as GuestHousesError)
-                                              .isNetworkError)
-                                            ElevatedButton(
-                                              onPressed: () => ref
-                                                  .read(
-                                                    guestHousesControllerProvider
-                                                        .notifier,
-                                                  )
-                                                  .fetchGuestHouses(
-                                                    userId: userId,
-                                                    role: role,
+                                                .isNetworkError)
+                                              ElevatedButton(
+                                                onPressed: () => ref
+                                                    .read(
+                                                      guestHousesControllerProvider
+                                                          .notifier,
+                                                    )
+                                                    .fetchGuestHouses(
+                                                      userId: userId,
+                                                      role: role,
+                                                    ),
+                                                style: ElevatedButton.styleFrom(
+                                                  padding: EdgeInsets.zero,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(12),
                                                   ),
-                                              style: ElevatedButton.styleFrom(
-                                                padding: EdgeInsets.zero,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
                                                 ),
-                                              ),
-                                              child: Ink(
-                                                decoration: BoxDecoration(
-                                                  gradient:
-                                                      const LinearGradient(
-                                                        colors: [
-                                                          Color(0xFF1C9826),
-                                                          Color(0xFF4CAF50),
-                                                        ],
+                                                child: Ink(
+                                                  decoration: BoxDecoration(
+                                                    gradient:
+                                                        const LinearGradient(
+                                                          colors: [
+                                                            Color(0xFF1C9826),
+                                                            Color(0xFF4CAF50),
+                                                          ],
+                                                        ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(12),
+                                                  ),
+                                                  child: Container(
+                                                    padding: EdgeInsets.symmetric(
+                                                      horizontal: isMobile
+                                                          ? 20
+                                                          : 24,
+                                                      vertical: isMobile
+                                                          ? 12
+                                                          : 14,
+                                                    ),
+                                                    child: Text(
+                                                      'Retry',
+                                                      style: GoogleFonts.poppins(
+                                                        color: Colors.white,
+                                                        fontSize: isMobile
+                                                            ? 14
+                                                            : 16,
+                                                        fontWeight:
+                                                            FontWeight.w600,
                                                       ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: isMobile
-                                                        ? 20
-                                                        : 24,
-                                                    vertical: isMobile
-                                                        ? 12
-                                                        : 14,
-                                                  ),
-                                                  child: Text(
-                                                    'Retry',
-                                                    style: GoogleFonts.poppins(
-                                                      color: Colors.white,
-                                                      fontSize: isMobile
-                                                          ? 14
-                                                          : 16,
-                                                      fontWeight:
-                                                          FontWeight.w600,
                                                     ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                          if ((ref.watch(
-                                                    guestHousesControllerProvider,
-                                                  )
-                                                  as GuestHousesError)
-                                              .isAuthError)
-                                            ElevatedButton(
-                                              onPressed: () => ref
-                                                  .read(
-                                                    authControllerProvider
-                                                        .notifier,
-                                                  )
-                                                  .signOut(),
-                                              style: ElevatedButton.styleFrom(
-                                                padding: EdgeInsets.zero,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                              ),
-                                              child: Ink(
-                                                decoration: BoxDecoration(
-                                                  gradient:
-                                                      const LinearGradient(
-                                                        colors: [
-                                                          Color(0xFF1C9826),
-                                                          Color(0xFF4CAF50),
-                                                        ],
-                                                      ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: isMobile
-                                                        ? 20
-                                                        : 24,
-                                                    vertical: isMobile
-                                                        ? 12
-                                                        : 14,
-                                                  ),
-                                                  child: Text(
-                                                    'Sign In',
-                                                    style: GoogleFonts.poppins(
-                                                      color: Colors.white,
-                                                      fontSize: isMobile
-                                                          ? 14
-                                                          : 16,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : ref.watch(guestHousesControllerProvider)
-                                      is GuestHousesLoaded
-                                ? Builder(
-                                    builder: (context) {
-                                      final filteredGuestHouses =
-                                          _filterGuestHouses(
-                                            (ref.watch(
+                                            if ((ref.watch(
                                                       guestHousesControllerProvider,
                                                     )
-                                                    as GuestHousesLoaded)
-                                                .guestHouses,
-                                            _searchController.text.trim(),
-                                          );
-                                      final sortedGuestHouses =
-                                          _sortGuestHouses(filteredGuestHouses);
-                                      if (sortedGuestHouses.isEmpty) {
-                                        return SliverToBoxAdapter(
-                                          child: Center(
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Icon(
-                                                  Icons.search_off_rounded,
-                                                  size: isMobile ? 40 : 48,
-                                                  color: Colors.grey[500],
-                                                ),
-                                                const SizedBox(height: 16),
-                                                Text(
-                                                  'No guest houses match your search',
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: isMobile
-                                                        ? 14
-                                                        : 16,
-                                                    color: Colors.grey[700],
-                                                    fontWeight: FontWeight.w500,
+                                                    as GuestHousesError)
+                                                .isAuthError)
+                                              ElevatedButton(
+                                                onPressed: () => ref
+                                                    .read(
+                                                      authControllerProvider
+                                                          .notifier,
+                                                    )
+                                                    .signOut(),
+                                                style: ElevatedButton.styleFrom(
+                                                  padding: EdgeInsets.zero,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(12),
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                      return isMobile
-                                          ? SliverList(
-                                              delegate: SliverChildBuilderDelegate(
-                                                (context, index) {
-                                                  final guestHouse =
-                                                      sortedGuestHouses[index];
-                                                  return Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          bottom: 16,
+                                                child: Ink(
+                                                  decoration: BoxDecoration(
+                                                    gradient:
+                                                        const LinearGradient(
+                                                          colors: [
+                                                            Color(0xFF1C9826),
+                                                            Color(0xFF4CAF50),
+                                                          ],
                                                         ),
-                                                    child: AnimatedScale(
+                                                    borderRadius:
+                                                        BorderRadius.circular(12),
+                                                  ),
+                                                  child: Container(
+                                                    padding: EdgeInsets.symmetric(
+                                                      horizontal: isMobile
+                                                          ? 20
+                                                          : 24,
+                                                      vertical: isMobile
+                                                          ? 12
+                                                          : 14,
+                                                    ),
+                                                    child: Text(
+                                                      'Sign In',
+                                                      style: GoogleFonts.poppins(
+                                                        color: Colors.white,
+                                                        fontSize: isMobile
+                                                            ? 14
+                                                            : 16,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  : ref.watch(guestHousesControllerProvider)
+                                        is GuestHousesLoaded
+                                  ? Builder(
+                                      builder: (context) {
+                                        final filteredGuestHouses =
+                                            _filterGuestHouses(
+                                              (ref.watch(
+                                                        guestHousesControllerProvider,
+                                                      )
+                                                      as GuestHousesLoaded)
+                                                  .guestHouses,
+                                              _searchController.text.trim(),
+                                            );
+                                        final sortedGuestHouses =
+                                            _sortGuestHouses(filteredGuestHouses);
+                                        if (sortedGuestHouses.isEmpty) {
+                                          return SliverToBoxAdapter(
+                                            child: Center(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.search_off_rounded,
+                                                    size: isMobile ? 40 : 48,
+                                                    color: Colors.grey[500],
+                                                  ),
+                                                  const SizedBox(height: 16),
+                                                  Text(
+                                                    'No guest houses match your search',
+                                                    style: GoogleFonts.poppins(
+                                                      fontSize: isMobile
+                                                          ? 14
+                                                          : 16,
+                                                      color: Colors.grey[700],
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        return isMobile
+                                            ? SliverList(
+                                                delegate: SliverChildBuilderDelegate(
+                                                  (context, index) {
+                                                    final guestHouse =
+                                                        sortedGuestHouses[index];
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            bottom: 16,
+                                                          ),
+                                                      child: AnimatedScale(
+                                                        scale: 1.0,
+                                                        duration: const Duration(
+                                                          milliseconds: 300,
+                                                        ),
+                                                        curve:
+                                                            Curves.easeOutCubic,
+                                                        child: GuestHouseCard(
+                                                          guestHouse: guestHouse,
+                                                          isMobile: isMobile,
+                                                          isTablet: isTablet,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  childCount:
+                                                      sortedGuestHouses.length,
+                                                ),
+                                              )
+                                            : SliverGrid(
+                                                gridDelegate:
+                                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                                      crossAxisCount: isTablet
+                                                          ? 2
+                                                          : 3,
+                                                      crossAxisSpacing: 16,
+                                                      mainAxisSpacing: 16,
+                                                      childAspectRatio: isTablet
+                                                          ? 0.75
+                                                          : 0.8,
+                                                    ),
+                                                delegate: SliverChildBuilderDelegate(
+                                                  (context, index) {
+                                                    final guestHouse =
+                                                        sortedGuestHouses[index];
+                                                    return AnimatedScale(
                                                       scale: 1.0,
                                                       duration: const Duration(
                                                         milliseconds: 300,
                                                       ),
-                                                      curve:
-                                                          Curves.easeOutCubic,
+                                                      curve: Curves.easeOutCubic,
                                                       child: GuestHouseCard(
                                                         guestHouse: guestHouse,
                                                         isMobile: isMobile,
                                                         isTablet: isTablet,
                                                       ),
-                                                    ),
-                                                  );
-                                                },
-                                                childCount:
-                                                    sortedGuestHouses.length,
-                                              ),
-                                            )
-                                          : SliverGrid(
-                                              gridDelegate:
-                                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                                    crossAxisCount: isTablet
-                                                        ? 2
-                                                        : 3,
-                                                    crossAxisSpacing: 16,
-                                                    mainAxisSpacing: 16,
-                                                    childAspectRatio: isTablet
-                                                        ? 0.75
-                                                        : 0.8,
-                                                  ),
-                                              delegate: SliverChildBuilderDelegate(
-                                                (context, index) {
-                                                  final guestHouse =
-                                                      sortedGuestHouses[index];
-                                                  return AnimatedScale(
-                                                    scale: 1.0,
-                                                    duration: const Duration(
-                                                      milliseconds: 300,
-                                                    ),
-                                                    curve: Curves.easeOutCubic,
-                                                    child: GuestHouseCard(
-                                                      guestHouse: guestHouse,
-                                                      isMobile: isMobile,
-                                                      isTablet: isTablet,
-                                                    ),
-                                                  );
-                                                },
-                                                childCount:
-                                                    sortedGuestHouses.length,
-                                              ),
-                                            );
-                                    },
-                                  )
-                                : SliverToBoxAdapter(
-                                    child: Center(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.error_outline_rounded,
-                                            size: isMobile ? 40 : 48,
-                                            color: Colors.redAccent,
-                                          ),
-                                          const SizedBox(height: 16),
-                                          Text(
-                                            'Unable to load guest houses. Please try again.',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: isMobile ? 14 : 16,
+                                                    );
+                                                  },
+                                                  childCount:
+                                                      sortedGuestHouses.length,
+                                                ),
+                                              );
+                                      },
+                                    )
+                                  : SliverToBoxAdapter(
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.error_outline_rounded,
+                                              size: isMobile ? 40 : 48,
                                               color: Colors.redAccent,
-                                              fontWeight: FontWeight.w500,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              'Unable to load guest houses. Please try again.',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: isMobile ? 14 : 16,
+                                                color: Colors.redAccent,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            floatingActionButton: isOwner && userId != null
-                ? FloatingActionButton(
-                    onPressed: () => _showCreateGuestHouseDialog(userId!),
-                    elevation: 4,
-                    backgroundColor: Colors.transparent,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
+              floatingActionButton: isOwner && userId != null
+                  ? FloatingActionButton(
+                      onPressed: () => _showCreateGuestHouseDialog(userId!),
+                      elevation: 4,
+                      backgroundColor: Colors.transparent,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
                           ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.add_rounded,
-                          size: isMobile ? 26 : 30,
-                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.add_rounded,
+                            size: isMobile ? 26 : 30,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                : null,
+                    )
+                  : null,
+            ),
           );
         },
       ),

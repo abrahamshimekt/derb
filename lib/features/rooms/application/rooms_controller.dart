@@ -78,7 +78,7 @@ class RoomsController extends StateNotifier<RoomsStatus> {
     try {
       await _repository.createRoom(
         guestHouseId: guestHouseId,
-        roomNumber:roomNumber,
+        roomNumber: roomNumber,
         price: price,
         status: status,
         facilities: facilities,
@@ -115,15 +115,9 @@ class RoomsController extends StateNotifier<RoomsStatus> {
   }
 
   void subscribe({required String guestHouseId}) {
-    _subscription?.cancel();
-    _subscription = _repository.subscribeToRooms(guestHouseId: guestHouseId).listen(
-      (rooms) {
-        state = RoomsLoaded(rooms);
-      },
-      onError: (error, stackTrace) {
-        developer.log('Subscription error: $error', stackTrace: stackTrace);
-        state = RoomsError(error.toString());
-      },
+    _repository.subscribe(
+      guestHouseId: guestHouseId,
+      onUpdate: (rooms) => state = RoomsLoaded(rooms),
     );
   }
 
@@ -135,6 +129,7 @@ class RoomsController extends StateNotifier<RoomsStatus> {
   }
 }
 
-final roomsControllerProvider = StateNotifierProvider<RoomsController, RoomsStatus>(
-  (ref) => RoomsController(ref.read(roomsRepositoryProvider), ref),
-);
+final roomsControllerProvider =
+    StateNotifierProvider<RoomsController, RoomsStatus>(
+      (ref) => RoomsController(ref.read(roomsRepositoryProvider), ref),
+    );
