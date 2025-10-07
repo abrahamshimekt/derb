@@ -16,8 +16,9 @@ class ProfileRepository {
   }) async {
     String? avatarUrl;
     if (avatarFile != null) {
-      final fileName = '$userId/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final response = await _client.storage.from('avatars').upload(fileName, avatarFile);
+      final fileName =
+          '$userId/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await _client.storage.from('avatars').upload(fileName, avatarFile);
       avatarUrl = _client.storage.from('avatars').getPublicUrl(fileName);
     }
 
@@ -33,35 +34,10 @@ class ProfileRepository {
   }
 
   Future<int> getGuestHouseCount(String ownerId) async {
-    final response = await _client.from('guest_houses').select().eq('owner_id', ownerId).count();
-    return response.count;
-  }
-
-  Future<int> getTotalBookingsForOwner(String ownerId) async {
     final response = await _client
-        .from('bookings')
+        .from('guest_houses')
         .select()
-        .eq('guest_house.owner_id', ownerId)
-        .count();
-    return response.count;
-  }
-
-  Future<int> getUpcomingBookings(String userId) async {
-    final response = await _client
-        .from('bookings')
-        .select()
-        .eq('user_id', userId)
-        .gte('check_in_date', DateTime.now().toIso8601String())
-        .count();
-    return response.count;
-  }
-
-  Future<int> getPastBookings(String userId) async {
-    final response = await _client
-        .from('bookings')
-        .select()
-        .eq('user_id', userId)
-        .lt('check_in_date', DateTime.now().toIso8601String())
+        .eq('owner_id', ownerId)
         .count();
     return response.count;
   }
@@ -74,8 +50,10 @@ class ProfileRepository {
   }
 
   Future<void> deleteAccount() async {
-    // Note: Supabase may require custom function for account deletion
-    await _client.rpc('delete_user', params: {'user_id': _client.auth.currentUser?.id});
+    await _client.rpc(
+      'delete_user',
+      params: {'user_id': _client.auth.currentUser?.id},
+    );
   }
 }
 

@@ -10,6 +10,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../rooms/application/rooms_controller.dart';
 import '../data/models/guest_house.dart';
+import '../../../core/providers.dart';
 
 class GuestHouseDetailPage extends ConsumerStatefulWidget {
   final GuestHouse guestHouse;
@@ -27,7 +28,9 @@ class GuestHouseDetailPage extends ConsumerStatefulWidget {
   ConsumerState<GuestHouseDetailPage> createState() => _GuestHouseDetailPageState();
 }
 
-class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
+class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> with SingleTickerProviderStateMixin {
+  bool _isContentVisible = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +38,10 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
       final roomsNotifier = ref.read(roomsControllerProvider.notifier);
       roomsNotifier.fetchRooms(guestHouseId: widget.guestHouse.id);
       roomsNotifier.subscribe(guestHouseId: widget.guestHouse.id);
+      // Trigger fade-in animation
+      setState(() {
+        _isContentVisible = true;
+      });
     });
   }
 
@@ -49,11 +56,12 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
       builder: (context, constraints) {
         final isMobile = widget.isMobile;
         final isTablet = widget.isTablet;
+        final isDesktop = constraints.maxWidth >= 900;
         final padding = isMobile ? 16.0 : isTablet ? 24.0 : 32.0;
         final fontSizeTitle = isMobile ? 20.0 : isTablet ? 24.0 : 28.0;
-        final fontSizeSubtitle = isMobile ? 16.0 : isTablet ? 18.0 : 20.0;
-        final screenWidth = MediaQuery.sizeOf(context).width;
-        final imageHeight = isMobile ? screenWidth * 0.95 : isTablet ? screenWidth * 0.65 : screenWidth * 0.55;
+        final fontSizeSubtitle = isMobile ? 14.0 : isTablet ? 16.0 : 18.0;
+        final screenWidth = MediaQuery.of(context).size.width;
+        final imageHeight = isMobile ? screenWidth * 0.8 : isTablet ? screenWidth * 0.6 : screenWidth * 0.5;
 
         return Theme(
           data: ThemeData(
@@ -82,11 +90,12 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
               ),
             ),
             cardTheme: CardThemeData(
-              elevation: 4,
+              elevation: 6,
+              shadowColor: Colors.black.withOpacity(0.1),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
             ),
           ),
           child: PopScope(
@@ -104,6 +113,8 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
                     padding,
                     fontSizeSubtitle,
                     isMobile,
+                    isTablet,
+                    isDesktop,
                     isOwner,
                     ref,
                     imageHeight,
@@ -121,7 +132,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
   Widget _buildAppBar(double fontSizeTitle) {
     return SliverAppBar(
       pinned: true,
-      expandedHeight: 80.0,
+      expandedHeight: 100.0,
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       title: Text(
@@ -136,6 +147,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
         ),
       ),
       elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.1),
     );
   }
 
@@ -143,106 +155,132 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
     double padding,
     double fontSizeSubtitle,
     bool isMobile,
+    bool isTablet,
+    bool isDesktop,
     bool isOwner,
     WidgetRef ref,
     double imageHeight,
   ) {
     return SliverToBoxAdapter(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: imageHeight,
-            width: double.infinity,
-            child: widget.guestHouse.pictureUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: widget.guestHouse.pictureUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
-                      child: Container(color: Colors.grey[300]),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.error_outline,
-                        color: Colors.redAccent,
-                        size: 40,
+      child: AnimatedOpacity(
+        opacity: _isContentVisible ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 500),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: imageHeight,
+              width: double.infinity,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                child: widget.guestHouse.pictureUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: widget.guestHouse.pictureUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: Container(color: Colors.grey[300]),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(
+                            Icons.error_outline,
+                            color: Colors.redAccent,
+                            size: 40,
+                          ),
+                        ),
+                      )
+                    : Container(
+                        color: Colors.grey[300],
+                        child: const Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                          size: 40,
+                        ),
                       ),
-                    ),
-                  )
-                : Container(
-                    color: Colors.grey[300],
-                    child: const Icon(
-                      Icons.image_not_supported,
-                      color: Colors.grey,
-                      size: 40,
-                    ),
-                  ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  const Color(0xFF1C9826).withOpacity(0.05),
-                  Colors.white.withOpacity(0.9),
-                ],
               ),
             ),
-            padding: EdgeInsets.all(padding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionTitle('Location', fontSizeSubtitle),
-                const SizedBox(height: 8),
-                Text(
-                  '${widget.guestHouse.city}, ${widget.guestHouse.subCity}, ${widget.guestHouse.region}',
-                  style: GoogleFonts.poppins(
-                    fontSize: fontSizeSubtitle,
-                    color: Colors.grey[600],
-                  ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFF1C9826).withOpacity(0.05),
+                    Colors.white.withOpacity(0.9),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                _buildSectionTitle('Description', fontSizeSubtitle),
-                const SizedBox(height: 8),
-                Text(
-                  widget.guestHouse.description,
-                  style: GoogleFonts.poppins(
-                    fontSize: fontSizeSubtitle,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildSectionTitle('Details', fontSizeSubtitle),
-                const SizedBox(height: 8),
-                Text(
-                  'Number of Rooms: ${widget.guestHouse.numberOfRooms}',
-                  style: GoogleFonts.poppins(
-                    fontSize: fontSizeSubtitle,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                if (widget.guestHouse.rating != null)
+              ),
+              padding: EdgeInsets.all(padding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Location', fontSizeSubtitle),
+                  const SizedBox(height: 8),
                   Text(
-                    'Rating: ${widget.guestHouse.rating}',
+                    '${widget.guestHouse.city}, ${widget.guestHouse.subCity}, ${widget.guestHouse.region}',
                     style: GoogleFonts.poppins(
                       fontSize: fontSizeSubtitle,
                       color: Colors.grey[600],
                     ),
                   ),
-                const SizedBox(height: 16),
-                _buildSectionTitle('Rooms', fontSizeSubtitle),
-                const SizedBox(height: 8),
-                const RoomFilter(),
-                const SizedBox(height: 8),
-                _buildRoomsList(isOwner,padding, fontSizeSubtitle, isMobile, ref),
-              ],
+                  const SizedBox(height: 16),
+                  _buildSectionTitle('Description', fontSizeSubtitle),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.guestHouse.description,
+                    style: GoogleFonts.poppins(
+                      fontSize: fontSizeSubtitle,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSectionTitle('Details', fontSizeSubtitle),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Number of Rooms: ${widget.guestHouse.numberOfRooms}',
+                    style: GoogleFonts.poppins(
+                      fontSize: fontSizeSubtitle,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  if (widget.guestHouse.rating != null)
+                    Text(
+                      'Rating: ${widget.guestHouse.rating!.toStringAsFixed(1)}',
+                      style: GoogleFonts.poppins(
+                        fontSize: fontSizeSubtitle,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildSectionTitle('Rooms', fontSizeSubtitle),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.filter_list,
+                          color: Color(0xFF1C9826),
+                          size: 28,
+                        ),
+                        tooltip: 'Filter Rooms',
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => const RoomFilterDialog(),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _buildRoomsList(isOwner, padding, fontSizeSubtitle, isMobile, isTablet, isDesktop, ref),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -263,41 +301,81 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
     double padding,
     double fontSizeSubtitle,
     bool isMobile,
+    bool isTablet,
+    bool isDesktop,
     WidgetRef ref,
   ) {
     final roomsStatus = ref.watch(roomsControllerProvider);
+    final filter = ref.watch(roomFilterProvider);
+    final minPrice = filter['minPrice'] as double;
+    final maxPrice = filter['maxPrice'] as double;
+    final minRating = filter['minRating'] as double;
+    final maxRating = filter['maxRating'] as double;
+
     if (roomsStatus is RoomsInitial) {
       return const Text('Initializing...');
     } else if (roomsStatus is RoomsLoading) {
       return const RoomShimmer();
     } else if (roomsStatus is RoomsLoaded) {
-      final selectedFilter = ref.watch(roomFilterProvider);
       final rooms = roomsStatus.rooms.where((room) {
-        if (selectedFilter == 'All') return true;
-        return room.status.toLowerCase() == selectedFilter.toLowerCase();
+        final priceInRange = room.price >= minPrice && room.price <= maxPrice;
+        final ratingInRange = (room.rating >= minRating && room.rating <= maxRating);
+        return priceInRange && ratingInRange;
       }).toList();
+
       if (rooms.isEmpty) {
         return Text(
-          'No rooms available',
+          'No available rooms match the filters',
           style: GoogleFonts.poppins(
             fontSize: fontSizeSubtitle,
             color: Colors.grey[600],
           ),
         );
       }
-      return ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: rooms.length,
-        itemBuilder: (context, index) {
-          return RoomCard(
-            isOwner:isOwner,
-            room: rooms[index],
-            padding: padding / 2,
-            fontSizeSubtitle: fontSizeSubtitle,
-          );
-        },
-      );
+
+      if (isDesktop || isTablet) {
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isDesktop ? 3 : 2,
+            crossAxisSpacing: padding,
+            mainAxisSpacing: padding,
+            childAspectRatio: isDesktop ? 1.2 : 1.0,
+          ),
+          itemCount: rooms.length,
+          itemBuilder: (context, index) {
+            return AnimatedOpacity(
+              opacity: _isContentVisible ? 1.0 : 0.0,
+              duration: Duration(milliseconds: 300 + index * 100),
+              child: RoomCard(
+                isOwner: isOwner,
+                room: rooms[index],
+                padding: padding / 2,
+                fontSizeSubtitle: fontSizeSubtitle,
+              ),
+            );
+          },
+        );
+      } else {
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: rooms.length,
+          itemBuilder: (context, index) {
+            return AnimatedOpacity(
+              opacity: _isContentVisible ? 1.0 : 0.0,
+              duration: Duration(milliseconds: 300 + index * 100),
+              child: RoomCard(
+                isOwner: isOwner,
+                room: rooms[index],
+                padding: padding / 2,
+                fontSizeSubtitle: fontSizeSubtitle,
+              ),
+            );
+          },
+        );
+      }
     } else if (roomsStatus is RoomsError) {
       return Column(
         children: [
@@ -392,7 +470,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> {
           ),
         );
       },
-      elevation: 4,
+      elevation: 6,
       backgroundColor: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(

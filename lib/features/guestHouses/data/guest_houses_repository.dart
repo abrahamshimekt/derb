@@ -15,6 +15,7 @@ abstract class IGuestHousesRepository {
     String? userId,
     required String role,
   });
+
   Future<GuestHouse> createGuestHouse({
     required String ownerId,
     required double latitude,
@@ -28,17 +29,19 @@ abstract class IGuestHousesRepository {
     required String guestHouseName,
     required String description,
   });
+
   void subscribeToGuestHouses(
     void Function(List<GuestHouse> guestHouses) onUpdate, {
     String? userId,
     required String role,
   });
+
   void unsubscribe();
 }
 
 class SupabaseGuestHousesRepository implements IGuestHousesRepository {
   final _client = AppSupabase.client;
-  StreamSubscription<SupabaseStreamEvent>? _subscription;
+  StreamSubscription<List<Map<String, dynamic>>>? _subscription;
 
   @override
   Future<List<GuestHouse>> fetchGuestHouses({
@@ -52,21 +55,19 @@ class SupabaseGuestHousesRepository implements IGuestHousesRepository {
         return [];
       }
 
-      // Initialize the query as a PostgrestFilterBuilder
       var query = _client
           .from('guest_houses')
           .select(
             'id, owner_id, latitude, longitude, relative_location_description, number_of_rooms, city, region, sub_city, picture_url, guest_house_name, description, rating',
           );
 
-      // Apply owner_id filter for guest_house_owner role
       if (role == 'guest_house_owner' && userId != null) {
         query = query.eq('owner_id', userId);
       }
 
-      // Apply pagination if provided
       PostgrestTransformBuilder<List<Map<String, dynamic>>> transformQuery =
           query;
+
       if (pageNumber != null && pageSize != null) {
         final from = (pageNumber - 1) * pageSize;
         final to = from + pageSize - 1;
@@ -77,12 +78,9 @@ class SupabaseGuestHousesRepository implements IGuestHousesRepository {
 
       final response = await transformQuery;
       final guestHouses = (response as List<dynamic>)
-          .map((json) => GuestHouse.fromJson(json))
+          .map((json) => GuestHouse.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      if (guestHouses.isEmpty) {
-        return [];
-      }
       return guestHouses;
     } catch (e) {
       throw mapSupabaseError(e);
@@ -133,6 +131,7 @@ class SupabaseGuestHousesRepository implements IGuestHousesRepository {
           })
           .select()
           .single();
+
       developer.log('Created guest house: ${response['guest_house_name']}');
       return GuestHouse.fromJson(response);
     } catch (e) {
@@ -148,35 +147,45 @@ class SupabaseGuestHousesRepository implements IGuestHousesRepository {
     required String role,
   }) {
     try {
-      String tableFilter = 'guest_houses';
-      if (role == 'guest_house_owner' && userId != null) {
-        tableFilter = 'guest_houses:owner_id=eq.$userId';
-      } else if (role == 'guest_house_owner' && userId == null) {
-        developer.log(
-          'Warning: userId is null for guest_house_owner role, subscribing to empty stream',
-        );
-        onUpdate([]);
-        return;
+      Stream<List<Map<String, dynamic>>> stream;
+
+      if (role == 'guest_house_owner') {
+        if (userId == null) {
+          developer.log(
+            'Warning: userId is null for guest_house_owner role, emitting empty list',
+          );
+          onUpdate([]);
+          return;
+        }
+        stream = _client
+            .from('guest_houses')
+            .stream(primaryKey: ['id'])
+            .eq('owner_id', userId);
+      } else {
+        stream = _client.from('guest_houses').stream(primaryKey: ['id']);
       }
 
-      _subscription = _client
-          .from(tableFilter)
-          .stream(primaryKey: ['id'])
-          .listen(
-            (List<Map<String, dynamic>> data) {
-              final guestHouses =
-                  data.map((json) => GuestHouse.fromJson(json)).toList()..sort(
-                    (a, b) => a.guestHouseName.compareTo(b.guestHouseName),
-                  );
-              developer.log(
-                'Real-time update received: ${guestHouses.length} guest houses${role == 'guest_house_owner' ? ' (owner role, user $userId)' : ''}',
-              );
-              onUpdate(guestHouses);
-            },
-            onError: (error) {
-              developer.log('Real-time subscription error: $error');
-            },
-          );
+      _subscription = stream.listen(
+        (data) {
+          try {
+            final guestHouses =
+                data.map((json) => GuestHouse.fromJson(json)).toList()..sort(
+                  (a, b) => a.guestHouseName.compareTo(b.guestHouseName),
+                );
+
+            developer.log(
+              'Real-time update: ${guestHouses.length} guest houses'
+              '${role == "guest_house_owner" ? " (owner $userId)" : ""}',
+            );
+            onUpdate(guestHouses);
+          } catch (e) {
+            developer.log('Real-time parse error: $e');
+          }
+        },
+        onError: (error) {
+          developer.log('Real-time subscription error: $error');
+        },
+      );
     } catch (e) {
       developer.log('Error setting up real-time subscription: $e');
       throw mapSupabaseError(e);

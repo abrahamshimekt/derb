@@ -23,10 +23,12 @@ class GuestHousesFilterDialog extends StatefulWidget {
   });
 
   @override
-  State<GuestHousesFilterDialog> createState() => _GuestHousesFilterDialogState();
+  State<GuestHousesFilterDialog> createState() =>
+      _GuestHousesFilterDialogState();
 }
 
-class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with SingleTickerProviderStateMixin {
+class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog>
+    with SingleTickerProviderStateMixin {
   late String? tempCityFilter;
   late String? tempRegionFilter;
   late String? tempSubCityFilter;
@@ -46,7 +48,10 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
       duration: const Duration(milliseconds: 200),
     );
     _buttonScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _buttonAnimationController, curve: Curves.easeOutCubic),
+      CurvedAnimation(
+        parent: _buttonAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
     );
   }
 
@@ -59,13 +64,22 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
-    final isTablet = MediaQuery.of(context).size.width >= 600 && MediaQuery.of(context).size.width < 900;
-    final padding = isMobile ? 16.0 : isTablet ? 20.0 : 24.0;
+    final isTablet =
+        MediaQuery.of(context).size.width >= 600 &&
+        MediaQuery.of(context).size.width < 900;
+    final padding = isMobile
+        ? 16.0
+        : isTablet
+        ? 20.0
+        : 24.0;
     final fontSizeTitle = isMobile ? 18.0 : 20.0;
     final fontSizeLabel = isMobile ? 14.0 : 16.0;
-    final cities = widget.guestHouses.map((gh) => gh.city).toSet().toList()..sort();
-    final regions = widget.guestHouses.map((gh) => gh.region).toSet().toList()..sort();
-    final subCities = widget.guestHouses.map((gh) => gh.subCity).toSet().toList()..sort();
+    final cities = widget.guestHouses.map((gh) => gh.city).toSet().toList()
+      ..sort();
+    final regions = widget.guestHouses.map((gh) => gh.region).toSet().toList()
+      ..sort();
+    final subCities =
+        widget.guestHouses.map((gh) => gh.subCity).toSet().toList()..sort();
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -73,7 +87,11 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
       elevation: 8,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: isMobile ? MediaQuery.of(context).size.width * 0.9 : isTablet ? 450 : 500,
+          maxWidth: isMobile
+              ? MediaQuery.of(context).size.width * 0.9
+              : isTablet
+              ? 450
+              : 500,
           maxHeight: MediaQuery.of(context).size.height * 0.75,
         ),
         child: ClipRRect(
@@ -114,28 +132,46 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                       child: Column(
                         children: [
                           RadioListTile<String>(
-                            title: Text('Default', style: GoogleFonts.poppins(fontSize: fontSizeLabel - 2)),
+                            title: Text(
+                              'Default',
+                              style: GoogleFonts.poppins(
+                                fontSize: fontSizeLabel - 2,
+                              ),
+                            ),
                             value: 'Default',
                             groupValue: tempSortOption,
-                            onChanged: (value) => setState(() => tempSortOption = value!),
+                            onChanged: (value) =>
+                                setState(() => tempSortOption = value!),
                             activeColor: const Color(0xFF1C9826),
                             contentPadding: EdgeInsets.zero,
                             dense: true,
                           ),
                           RadioListTile<String>(
-                            title: Text('Rating (High to Low)', style: GoogleFonts.poppins(fontSize: fontSizeLabel - 2)),
+                            title: Text(
+                              'Rating (High to Low)',
+                              style: GoogleFonts.poppins(
+                                fontSize: fontSizeLabel - 2,
+                              ),
+                            ),
                             value: 'Rating',
                             groupValue: tempSortOption,
-                            onChanged: (value) => setState(() => tempSortOption = value!),
+                            onChanged: (value) =>
+                                setState(() => tempSortOption = value!),
                             activeColor: const Color(0xFF1C9826),
                             contentPadding: EdgeInsets.zero,
                             dense: true,
                           ),
                           RadioListTile<String>(
-                            title: Text('Number of Rooms (High to Low)', style: GoogleFonts.poppins(fontSize: fontSizeLabel - 2)),
+                            title: Text(
+                              'Number of Rooms (High to Low)',
+                              style: GoogleFonts.poppins(
+                                fontSize: fontSizeLabel - 2,
+                              ),
+                            ),
                             value: 'Rooms',
                             groupValue: tempSortOption,
-                            onChanged: (value) => setState(() => tempSortOption = value!),
+                            onChanged: (value) =>
+                                setState(() => tempSortOption = value!),
                             activeColor: const Color(0xFF1C9826),
                             contentPadding: EdgeInsets.zero,
                             dense: true,
@@ -158,18 +194,26 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                       child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           labelText: 'City',
-                          labelStyle: GoogleFonts.poppins(color: Colors.grey[600]),
+                          labelStyle: GoogleFonts.poppins(
+                            color: Colors.grey[600],
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey[300]!),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF1C9826), width: 2),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1C9826),
+                              width: 2,
+                            ),
                           ),
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.9),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           prefixIcon: Icon(
                             Icons.location_city_rounded,
                             color: Colors.grey[600],
@@ -178,13 +222,28 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                         ),
                         value: tempCityFilter,
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('All Cities')),
-                          ...cities.map((city) => DropdownMenuItem(value: city, child: Text(city))),
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('All Cities'),
+                          ),
+                          ...cities.map(
+                            (city) => DropdownMenuItem(
+                              value: city,
+                              child: Text(city),
+                            ),
+                          ),
                         ],
-                        onChanged: (value) => setState(() => tempCityFilter = value),
-                        style: GoogleFonts.poppins(color: Colors.black87, fontSize: fontSizeLabel - 2),
+                        onChanged: (value) =>
+                            setState(() => tempCityFilter = value),
+                        style: GoogleFonts.poppins(
+                          color: Colors.black87,
+                          fontSize: fontSizeLabel - 2,
+                        ),
                         dropdownColor: Colors.white.withOpacity(0.95),
-                        icon: Icon(Icons.arrow_drop_down_rounded, color: const Color(0xFF1C9826)),
+                        icon: Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: const Color(0xFF1C9826),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -193,18 +252,26 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                       child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           labelText: 'Region',
-                          labelStyle: GoogleFonts.poppins(color: Colors.grey[600]),
+                          labelStyle: GoogleFonts.poppins(
+                            color: Colors.grey[600],
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey[300]!),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF1C9826), width: 2),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1C9826),
+                              width: 2,
+                            ),
                           ),
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.9),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           prefixIcon: Icon(
                             Icons.map_rounded,
                             color: Colors.grey[600],
@@ -213,13 +280,28 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                         ),
                         value: tempRegionFilter,
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('All Regions')),
-                          ...regions.map((region) => DropdownMenuItem(value: region, child: Text(region))),
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('All Regions'),
+                          ),
+                          ...regions.map(
+                            (region) => DropdownMenuItem(
+                              value: region,
+                              child: Text(region),
+                            ),
+                          ),
                         ],
-                        onChanged: (value) => setState(() => tempRegionFilter = value),
-                        style: GoogleFonts.poppins(color: Colors.black87, fontSize: fontSizeLabel - 2),
+                        onChanged: (value) =>
+                            setState(() => tempRegionFilter = value),
+                        style: GoogleFonts.poppins(
+                          color: Colors.black87,
+                          fontSize: fontSizeLabel - 2,
+                        ),
                         dropdownColor: Colors.white.withOpacity(0.95),
-                        icon: Icon(Icons.arrow_drop_down_rounded, color: const Color(0xFF1C9826)),
+                        icon: Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: const Color(0xFF1C9826),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -228,18 +310,26 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                       child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           labelText: 'Sub City',
-                          labelStyle: GoogleFonts.poppins(color: Colors.grey[600]),
+                          labelStyle: GoogleFonts.poppins(
+                            color: Colors.grey[600],
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey[300]!),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF1C9826), width: 2),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1C9826),
+                              width: 2,
+                            ),
                           ),
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.9),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           prefixIcon: Icon(
                             Icons.location_on_rounded,
                             color: Colors.grey[600],
@@ -248,13 +338,28 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                         ),
                         value: tempSubCityFilter,
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('All Sub Cities')),
-                          ...subCities.map((subCity) => DropdownMenuItem(value: subCity, child: Text(subCity))),
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('All Sub Cities'),
+                          ),
+                          ...subCities.map(
+                            (subCity) => DropdownMenuItem(
+                              value: subCity,
+                              child: Text(subCity),
+                            ),
+                          ),
                         ],
-                        onChanged: (value) => setState(() => tempSubCityFilter = value),
-                        style: GoogleFonts.poppins(color: Colors.black87, fontSize: fontSizeLabel - 2),
+                        onChanged: (value) =>
+                            setState(() => tempSubCityFilter = value),
+                        style: GoogleFonts.poppins(
+                          color: Colors.black87,
+                          fontSize: fontSizeLabel - 2,
+                        ),
                         dropdownColor: Colors.white.withOpacity(0.95),
-                        icon: Icon(Icons.arrow_drop_down_rounded, color: const Color(0xFF1C9826)),
+                        icon: Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: const Color(0xFF1C9826),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -275,7 +380,8 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                               tempSortOption = 'Default';
                             });
                           },
-                          onTapCancel: () => _buttonAnimationController.reverse(),
+                          onTapCancel: () =>
+                              _buttonAnimationController.reverse(),
                           child: AnimatedBuilder(
                             animation: _buttonScaleAnimation,
                             builder: (context, child) => Transform.scale(
@@ -295,7 +401,10 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                                     fontSize: fontSizeLabel - 2,
                                     fontWeight: FontWeight.w500,
                                   ),
-                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
                                 ),
                                 child: const Text('Clear'),
                               ),
@@ -313,7 +422,8 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                                 _buttonAnimationController.reverse();
                                 Navigator.pop(context);
                               },
-                              onTapCancel: () => _buttonAnimationController.reverse(),
+                              onTapCancel: () =>
+                                  _buttonAnimationController.reverse(),
                               child: AnimatedBuilder(
                                 animation: _buttonScaleAnimation,
                                 builder: (context, child) => Transform.scale(
@@ -326,7 +436,10 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                                         fontSize: fontSizeLabel - 2,
                                         fontWeight: FontWeight.w500,
                                       ),
-                                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
                                     ),
                                     child: const Text('Cancel'),
                                   ),
@@ -341,33 +454,51 @@ class _GuestHousesFilterDialogState extends State<GuestHousesFilterDialog> with 
                               },
                               onTapUp: (_) {
                                 _buttonAnimationController.reverse();
-                                widget.onApply(tempCityFilter, tempRegionFilter, tempSubCityFilter, tempSortOption);
+                                widget.onApply(
+                                  tempCityFilter,
+                                  tempRegionFilter,
+                                  tempSubCityFilter,
+                                  tempSortOption,
+                                );
                                 Navigator.pop(context);
                               },
-                              onTapCancel: () => _buttonAnimationController.reverse(),
+                              onTapCancel: () =>
+                                  _buttonAnimationController.reverse(),
                               child: AnimatedBuilder(
                                 animation: _buttonScaleAnimation,
                                 builder: (context, child) => Transform.scale(
                                   scale: _buttonScaleAnimation.value,
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      widget.onApply(tempCityFilter, tempRegionFilter, tempSubCityFilter, tempSortOption);
+                                      widget.onApply(
+                                        tempCityFilter,
+                                        tempRegionFilter,
+                                        tempSubCityFilter,
+                                        tempSortOption,
+                                      );
                                       Navigator.pop(context);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       padding: EdgeInsets.zero,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                       elevation: 0,
                                     ),
                                     child: Ink(
                                       decoration: BoxDecoration(
                                         gradient: const LinearGradient(
-                                          colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
+                                          colors: [
+                                            Color(0xFF1C9826),
+                                            Color(0xFF4CAF50),
+                                          ],
                                         ),
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.2),
+                                            color: Colors.black.withOpacity(
+                                              0.2,
+                                            ),
                                             blurRadius: 6,
                                             offset: const Offset(0, 2),
                                           ),

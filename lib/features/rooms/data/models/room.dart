@@ -4,6 +4,7 @@ class Room {
   final List<String>? roomPictures;
   final String roomNumber;
   final double price;
+  final double rating;
   final String status;
   final List<String>? facilities;
   final DateTime createdAt;
@@ -14,6 +15,7 @@ class Room {
     this.roomPictures,
     required this.roomNumber,
     required this.price,
+    required this.rating,
     required this.status,
     this.facilities,
     required this.createdAt,
@@ -29,6 +31,7 @@ class Room {
 
       roomNumber: json['room_number'] as String,
       price: (json['price'] as num).toDouble(),
+      rating:(json['rating'] as num).toDouble(),
       status: json['status'],
       facilities: json['facilities'] != null
           ? List<String>.from(json['facilities'])

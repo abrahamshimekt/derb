@@ -357,7 +357,10 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 8,
+                                    sigmaY: 8,
+                                  ),
                                   child: TextField(
                                     controller: _searchController,
                                     decoration: InputDecoration(
@@ -368,7 +371,8 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                         size: isMobile ? 22 : 24,
                                       ),
                                       suffixIcon: AnimatedOpacity(
-                                        opacity: _searchController.text.isNotEmpty
+                                        opacity:
+                                            _searchController.text.isNotEmpty
                                             ? 1.0
                                             : 0.0,
                                         duration: const Duration(
@@ -475,7 +479,9 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                                   padding: EdgeInsets.zero,
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius:
-                                                        BorderRadius.circular(12),
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
                                                   ),
                                                 ),
                                                 child: Ink(
@@ -488,27 +494,31 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                                           ],
                                                         ),
                                                     borderRadius:
-                                                        BorderRadius.circular(12),
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
                                                   ),
                                                   child: Container(
-                                                    padding: EdgeInsets.symmetric(
-                                                      horizontal: isMobile
-                                                          ? 20
-                                                          : 24,
-                                                      vertical: isMobile
-                                                          ? 12
-                                                          : 14,
-                                                    ),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: isMobile
+                                                              ? 20
+                                                              : 24,
+                                                          vertical: isMobile
+                                                              ? 12
+                                                              : 14,
+                                                        ),
                                                     child: Text(
                                                       'Retry',
-                                                      style: GoogleFonts.poppins(
-                                                        color: Colors.white,
-                                                        fontSize: isMobile
-                                                            ? 14
-                                                            : 16,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                            color: Colors.white,
+                                                            fontSize: isMobile
+                                                                ? 14
+                                                                : 16,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
                                                     ),
                                                   ),
                                                 ),
@@ -529,7 +539,9 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                                   padding: EdgeInsets.zero,
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius:
-                                                        BorderRadius.circular(12),
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
                                                   ),
                                                 ),
                                                 child: Ink(
@@ -542,27 +554,31 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                                           ],
                                                         ),
                                                     borderRadius:
-                                                        BorderRadius.circular(12),
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
                                                   ),
                                                   child: Container(
-                                                    padding: EdgeInsets.symmetric(
-                                                      horizontal: isMobile
-                                                          ? 20
-                                                          : 24,
-                                                      vertical: isMobile
-                                                          ? 12
-                                                          : 14,
-                                                    ),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal: isMobile
+                                                              ? 20
+                                                              : 24,
+                                                          vertical: isMobile
+                                                              ? 12
+                                                              : 14,
+                                                        ),
                                                     child: Text(
                                                       'Sign In',
-                                                      style: GoogleFonts.poppins(
-                                                        color: Colors.white,
-                                                        fontSize: isMobile
-                                                            ? 14
-                                                            : 16,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                            color: Colors.white,
+                                                            fontSize: isMobile
+                                                                ? 14
+                                                                : 16,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
                                                     ),
                                                   ),
                                                 ),
@@ -585,7 +601,9 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                               _searchController.text.trim(),
                                             );
                                         final sortedGuestHouses =
-                                            _sortGuestHouses(filteredGuestHouses);
+                                            _sortGuestHouses(
+                                              filteredGuestHouses,
+                                            );
                                         if (sortedGuestHouses.isEmpty) {
                                           return SliverToBoxAdapter(
                                             child: Center(
@@ -606,7 +624,8 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                                           ? 14
                                                           : 16,
                                                       color: Colors.grey[700],
-                                                      fontWeight: FontWeight.w500,
+                                                      fontWeight:
+                                                          FontWeight.w500,
                                                     ),
                                                   ),
                                                 ],
@@ -627,13 +646,15 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                                           ),
                                                       child: AnimatedScale(
                                                         scale: 1.0,
-                                                        duration: const Duration(
-                                                          milliseconds: 300,
-                                                        ),
+                                                        duration:
+                                                            const Duration(
+                                                              milliseconds: 300,
+                                                            ),
                                                         curve:
                                                             Curves.easeOutCubic,
                                                         child: GuestHouseCard(
-                                                          guestHouse: guestHouse,
+                                                          guestHouse:
+                                                              guestHouse,
                                                           isMobile: isMobile,
                                                           isTablet: isTablet,
                                                         ),
@@ -656,26 +677,32 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                                           ? 0.75
                                                           : 0.8,
                                                     ),
-                                                delegate: SliverChildBuilderDelegate(
-                                                  (context, index) {
-                                                    final guestHouse =
-                                                        sortedGuestHouses[index];
-                                                    return AnimatedScale(
-                                                      scale: 1.0,
-                                                      duration: const Duration(
-                                                        milliseconds: 300,
-                                                      ),
-                                                      curve: Curves.easeOutCubic,
-                                                      child: GuestHouseCard(
-                                                        guestHouse: guestHouse,
-                                                        isMobile: isMobile,
-                                                        isTablet: isTablet,
-                                                      ),
-                                                    );
-                                                  },
-                                                  childCount:
-                                                      sortedGuestHouses.length,
-                                                ),
+                                                delegate:
+                                                    SliverChildBuilderDelegate(
+                                                      (context, index) {
+                                                        final guestHouse =
+                                                            sortedGuestHouses[index];
+                                                        return AnimatedScale(
+                                                          scale: 1.0,
+                                                          duration:
+                                                              const Duration(
+                                                                milliseconds:
+                                                                    300,
+                                                              ),
+                                                          curve: Curves
+                                                              .easeOutCubic,
+                                                          child: GuestHouseCard(
+                                                            guestHouse:
+                                                                guestHouse,
+                                                            isMobile: isMobile,
+                                                            isTablet: isTablet,
+                                                          ),
+                                                        );
+                                                      },
+                                                      childCount:
+                                                          sortedGuestHouses
+                                                              .length,
+                                                    ),
                                               );
                                       },
                                     )

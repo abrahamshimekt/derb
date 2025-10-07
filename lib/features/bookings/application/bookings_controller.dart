@@ -72,6 +72,7 @@ class BookingsController extends StateNotifier<BookingsStatus> {
     String? transactionId,
     required XFile idImage,
     required XFile receiptImage,
+    required String phoneNumber
   }) async {
     state = const BookingsLoading();
     try {
@@ -84,6 +85,7 @@ class BookingsController extends StateNotifier<BookingsStatus> {
         transactionId: transactionId,
         idImage: idImage,
         receiptImage: receiptImage,
+        phoneNumber:phoneNumber
       );
       if (state is BookingsLoaded) {
         final current = state as BookingsLoaded;

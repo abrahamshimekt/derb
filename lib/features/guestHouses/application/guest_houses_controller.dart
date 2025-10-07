@@ -21,7 +21,6 @@ class GuestHousesLoading extends GuestHousesStatus {
 
 class GuestHousesLoaded extends GuestHousesStatus {
   final List<GuestHouse> guestHouses;
-
   const GuestHousesLoaded(this.guestHouses);
 }
 
@@ -29,7 +28,6 @@ class GuestHousesError extends GuestHousesStatus {
   final String message;
   final bool isNetworkError;
   final bool isAuthError;
-
   const GuestHousesError(
     this.message, {
     this.isNetworkError = false,
@@ -42,32 +40,26 @@ class GuestHousesController extends StateNotifier<GuestHousesStatus> {
   final Ref _ref;
 
   GuestHousesController(this._repository, this._ref)
-      : super(const GuestHousesInitial()) {
-    // Listen to auth status changes
+    : super(const GuestHousesInitial()) {
     _ref.listen(authControllerProvider, (previous, next) {
       if (next is AuthAuthenticated) {
         final userId = next.session.user.id;
-        final role = next.session.user.userMetadata != null &&
-                next.session.user.userMetadata!.containsKey('role')
-            ? next.session.user.userMetadata!['role'].toString()
-            : 'tenant';
-        // Re-fetch data and update subscription on login
+        final role =
+            (next.session.user.userMetadata?['role']?.toString()) ?? 'tenant';
         fetchGuestHouses(userId: userId, role: role);
         _updateSubscription(userId: userId, role: role);
       }
     });
 
-    // Initial fetch based on current auth status
     final authStatus = _ref.read(authControllerProvider);
     final userId = authStatus is AuthAuthenticated
         ? authStatus.session.user.id
         : null;
     final role = authStatus is AuthAuthenticated
-        ? (authStatus.session.user.userMetadata != null &&
-                  authStatus.session.user.userMetadata!.containsKey('role')
-              ? authStatus.session.user.userMetadata!['role'].toString()
-              : 'tenant')
+        ? (authStatus.session.user.userMetadata?['role']?.toString() ??
+              'tenant')
         : 'tenant';
+
     fetchGuestHouses(userId: userId, role: role);
     _subscribe(userId: userId, role: role);
   }
@@ -126,7 +118,7 @@ class GuestHousesController extends StateNotifier<GuestHousesStatus> {
         guestHouseName: guestHouseName,
         description: description,
       );
-      // No need to call fetchGuestHouses; real-time subscription updates state
+      // Realtime subscription will update state
     } catch (e, stackTrace) {
       developer.log('Error creating guest house: $e', stackTrace: stackTrace);
       if (e is NetworkFailure) {
@@ -142,12 +134,7 @@ class GuestHousesController extends StateNotifier<GuestHousesStatus> {
   void _subscribe({required String? userId, required String role}) {
     try {
       _repository.subscribeToGuestHouses(
-        (guestHouses, {dynamic error}) {
-          if (error != null) {
-            developer.log('Subscription error: $error');
-            state = GuestHousesError(error.toString());
-            return;
-          }
+        (guestHouses) {
           state = GuestHousesLoaded(guestHouses);
         },
         userId: userId,
@@ -163,9 +150,7 @@ class GuestHousesController extends StateNotifier<GuestHousesStatus> {
   }
 
   void _updateSubscription({required String? userId, required String role}) {
-    // Unsubscribe from previous subscription
     _repository.unsubscribe();
-    // Start a new subscription with updated userId and role
     _subscribe(userId: userId, role: role);
   }
 

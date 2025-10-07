@@ -16,7 +16,8 @@ class ProfilePage extends ConsumerStatefulWidget {
   ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProviderStateMixin {
+class _ProfilePageState extends ConsumerState<ProfilePage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _phoneNumberController = TextEditingController();
@@ -34,7 +35,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
       duration: const Duration(milliseconds: 300),
     );
     _gearRotation = Tween<double>(begin: 0, end: 0.25).animate(
-      CurvedAnimation(parent: _gearAnimationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _gearAnimationController,
+        curve: Curves.easeInOut,
+      ),
     );
   }
 
@@ -103,7 +107,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
     ctrl.sendPasswordResetEmail();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Password reset email sent', style: GoogleFonts.poppins()),
+        content: Text(
+          'Password reset email sent',
+          style: GoogleFonts.poppins(),
+        ),
         backgroundColor: const Color(0xFF1C9826),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -121,14 +128,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Account', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        content: Text('Are you sure you want to delete your account? This action cannot be undone.'),
+        title: Text(
+          'Delete Account',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Are you sure you want to delete your account? This action cannot be undone.',
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Colors.white.withOpacity(0.95),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: const Color(0xFF1C9826))),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(color: const Color(0xFF1C9826)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -137,9 +152,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: Text('Delete', style: GoogleFonts.poppins(color: Colors.white)),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -155,7 +175,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
-            child: CircleAvatar(radius: width * 0.15, backgroundColor: Colors.white),
+            child: CircleAvatar(
+              radius: width * 0.15,
+              backgroundColor: Colors.white,
+            ),
           ),
           const SizedBox(height: 16),
           Container(width: width * 0.6, height: 20, color: Colors.white),
@@ -181,7 +204,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
-    final isTablet = MediaQuery.of(context).size.width >= 600 && MediaQuery.of(context).size.width < 900;
+    final isTablet =
+        MediaQuery.of(context).size.width >= 600 &&
+        MediaQuery.of(context).size.width < 900;
     final isDesktop = MediaQuery.of(context).size.width >= 900;
     final profileStatus = ref.watch(profileControllerProvider);
     final session = ref.read(authRepositoryProvider).session;
@@ -195,21 +220,29 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
             content: Text(next.message, style: GoogleFonts.poppins()),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             action: SnackBarAction(
               label: 'Dismiss',
               textColor: Colors.white,
-              onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+              onPressed: () =>
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar(),
             ),
           ),
         );
       } else if (next is ProfileUpdated) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Profile updated successfully', style: GoogleFonts.poppins()),
+            content: Text(
+              'Profile updated successfully',
+              style: GoogleFonts.poppins(),
+            ),
             backgroundColor: const Color(0xFF1C9826),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -256,8 +289,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
               vertical: isMobile ? 12 : 16,
               horizontal: isMobile ? 16 : 24,
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            textStyle: GoogleFonts.poppins(fontSize: isMobile ? 14 : 16, fontWeight: FontWeight.w600),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            textStyle: GoogleFonts.poppins(
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: FontWeight.w600,
+            ),
             elevation: 2,
             shadowColor: Colors.black26,
           ),
@@ -265,18 +303,25 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
             foregroundColor: const Color(0xFF1C9826),
-            textStyle: GoogleFonts.poppins(fontSize: isMobile ? 12 : 14, fontWeight: FontWeight.w500),
+            textStyle: GoogleFonts.poppins(
+              fontSize: isMobile ? 12 : 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         cardTheme: CardThemeData(
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
           color: Colors.white.withOpacity(0.2),
         ),
         popupMenuTheme: PopupMenuThemeData(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 4,
           textStyle: GoogleFonts.poppins(fontSize: isMobile ? 14 : 16),
           color: Colors.white.withOpacity(0.95),
@@ -288,10 +333,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                const Color(0xFF1C9826).withOpacity(0.1),
-                Colors.white,
-              ],
+              colors: [const Color(0xFF1C9826).withOpacity(0.1), Colors.white],
             ),
           ),
           child: SafeArea(
@@ -325,7 +367,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                             animation: _gearAnimationController,
                             builder: (context, child) => Transform.rotate(
                               angle: _gearRotation.value * 2 * 3.14159,
-                              child: Icon(Icons.settings, size: isMobile ? 26 : 28, color: const Color(0xFF1C9826)),
+                              child: Icon(
+                                Icons.settings,
+                                size: isMobile ? 26 : 28,
+                                color: const Color(0xFF1C9826),
+                              ),
                             ),
                           ),
                           onSelected: (value) {
@@ -337,7 +383,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                             } else if (value == 'delete_account') {
                               _confirmDeleteAccount();
                             } else if (value == 'sign_out') {
-                              ref.read(authControllerProvider.notifier).signOut();
+                              ref
+                                  .read(authControllerProvider.notifier)
+                                  .signOut();
                             }
                           },
                           itemBuilder: (context) => [
@@ -345,7 +393,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                               value: 'edit',
                               child: Row(
                                 children: [
-                                  Icon(Icons.edit_outlined, color: const Color(0xFF1C9826), size: isMobile ? 18 : 20),
+                                  Icon(
+                                    Icons.edit_outlined,
+                                    color: const Color(0xFF1C9826),
+                                    size: isMobile ? 18 : 20,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     _isEditing ? 'Cancel Edit' : 'Edit Profile',
@@ -362,7 +414,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                               value: 'change_password',
                               child: Row(
                                 children: [
-                                  Icon(Icons.lock_outline, color: const Color(0xFF1C9826), size: isMobile ? 18 : 20),
+                                  Icon(
+                                    Icons.lock_outline,
+                                    color: const Color(0xFF1C9826),
+                                    size: isMobile ? 18 : 20,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Change Password',
@@ -379,7 +435,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                               value: 'delete_account',
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete_outline, color: Colors.red, size: isMobile ? 18 : 20),
+                                  Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                    size: isMobile ? 18 : 20,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Delete Account',
@@ -396,7 +456,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                               value: 'sign_out',
                               child: Row(
                                 children: [
-                                  Icon(Icons.logout, color: Colors.redAccent, size: isMobile ? 18 : 20),
+                                  Icon(
+                                    Icons.logout,
+                                    color: Colors.redAccent,
+                                    size: isMobile ? 18 : 20,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Sign Out',
@@ -418,16 +482,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final width = constraints.maxWidth;
-                      final padding = isMobile ? 16.0 : isTablet ? 24.0 : 32.0;
-                      final crossAxisCount = isMobile ? 1 : 2;
-                      final cardWidth = isDesktop ? 600.0 : width * 0.9;
-
+                      final padding = isMobile
+                          ? 16.0
+                          : isTablet
+                          ? 24.0
+                          : 32.0;
                       return Padding(
                         padding: EdgeInsets.all(padding),
                         child: profileStatus is ProfileLoading
                             ? _buildShimmerProfile(width)
                             : AnimatedOpacity(
-                                opacity: profileStatus is ProfileLoading ? 0.0 : 1.0,
+                                opacity: profileStatus is ProfileLoading
+                                    ? 0.0
+                                    : 1.0,
                                 duration: const Duration(milliseconds: 400),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,7 +502,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                     Center(
                                       child: AnimatedScale(
                                         scale: _isEditing ? 1.05 : 1.0,
-                                        duration: const Duration(milliseconds: 200),
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
                                         child: Stack(
                                           clipBehavior: Clip.none,
                                           children: [
@@ -443,7 +512,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                               decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
                                                 gradient: const LinearGradient(
-                                                  colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
+                                                  colors: [
+                                                    Color(0xFF1C9826),
+                                                    Color(0xFF4CAF50),
+                                                  ],
                                                 ),
                                                 boxShadow: const [
                                                   BoxShadow(
@@ -455,17 +527,30 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                               ),
                                               padding: const EdgeInsets.all(2),
                                               child: CircleAvatar(
-                                                radius: isMobile ? width * 0.15 : width * 0.1,
-                                                backgroundImage: _selectedImage != null
+                                                radius: isMobile
+                                                    ? width * 0.15
+                                                    : width * 0.1,
+                                                backgroundImage:
+                                                    _selectedImage != null
                                                     ? FileImage(_selectedImage!)
-                                                    : user?.userMetadata?['avatar_url'] != null
-                                                        ? NetworkImage(user!.userMetadata!['avatar_url'] as String)
-                                                        : null,
-                                                backgroundColor: Colors.grey[200],
-                                                child: user?.userMetadata?['avatar_url'] == null && _selectedImage == null
+                                                    : user?.userMetadata?['avatar_url'] !=
+                                                          null
+                                                    ? NetworkImage(
+                                                        user!.userMetadata!['avatar_url']
+                                                            as String,
+                                                      )
+                                                    : null,
+                                                backgroundColor:
+                                                    Colors.grey[200],
+                                                child:
+                                                    user?.userMetadata?['avatar_url'] ==
+                                                            null &&
+                                                        _selectedImage == null
                                                     ? Icon(
                                                         Icons.person,
-                                                        size: isMobile ? 40 : 60,
+                                                        size: isMobile
+                                                            ? 40
+                                                            : 60,
                                                         color: Colors.grey[600],
                                                       )
                                                     : null,
@@ -479,11 +564,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                                   onTap: _pickImage,
                                                   child: CircleAvatar(
                                                     radius: isMobile ? 16 : 20,
-                                                    backgroundColor: Colors.white.withOpacity(0.9),
+                                                    backgroundColor: Colors
+                                                        .white
+                                                        .withOpacity(0.9),
                                                     child: Icon(
                                                       Icons.camera_alt,
                                                       size: isMobile ? 16 : 20,
-                                                      color: const Color(0xFF1C9826),
+                                                      color: const Color(
+                                                        0xFF1C9826,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -492,88 +581,192 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                         ),
                                       ),
                                     ),
-                                   
+
                                     const SizedBox(height: 16),
                                     AnimatedContainer(
-                                      duration: const Duration(milliseconds: 300),
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
                                       curve: Curves.easeInOut,
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(16),
                                         child: BackdropFilter(
-                                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                          filter: ImageFilter.blur(
+                                            sigmaX: 10,
+                                            sigmaY: 10,
+                                          ),
                                           child: Container(
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(0.2),
-                                              borderRadius: BorderRadius.circular(16),
-                                              border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                              color: Colors.white.withOpacity(
+                                                0.2,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                color: Colors.white.withOpacity(
+                                                  0.3,
+                                                ),
+                                              ),
                                             ),
                                             child: Padding(
-                                              padding: EdgeInsets.all(isMobile ? 16 : 24),
+                                              padding: EdgeInsets.all(
+                                                isMobile ? 16 : 24,
+                                              ),
                                               child: _isEditing
                                                   ? Form(
                                                       key: _formKey,
                                                       child: Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
                                                         children: [
                                                           TextFormField(
-                                                            controller: _fullNameController,
+                                                            controller:
+                                                                _fullNameController,
                                                             decoration: InputDecoration(
-                                                              labelText: 'Full Name',
-                                                              prefixIcon: const Icon(Icons.person_outlined, color: Color(0xFF1C9826)),
+                                                              labelText:
+                                                                  'Full Name',
+                                                              prefixIcon: const Icon(
+                                                                Icons
+                                                                    .person_outlined,
+                                                                color: Color(
+                                                                  0xFF1C9826,
+                                                                ),
+                                                              ),
                                                             ),
-                                                            style: GoogleFonts.poppins(fontSize: isMobile ? 14 : 16),
-                                                            validator: _requiredValidator,
+                                                            style:
+                                                                GoogleFonts.poppins(
+                                                                  fontSize:
+                                                                      isMobile
+                                                                      ? 14
+                                                                      : 16,
+                                                                ),
+                                                            validator:
+                                                                _requiredValidator,
                                                           ),
-                                                          const SizedBox(height: 16),
+                                                          const SizedBox(
+                                                            height: 16,
+                                                          ),
                                                           TextFormField(
-                                                            controller: _phoneNumberController,
+                                                            controller:
+                                                                _phoneNumberController,
                                                             decoration: InputDecoration(
-                                                              labelText: 'Phone Number',
-                                                              prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF1C9826)),
+                                                              labelText:
+                                                                  'Phone Number',
+                                                              prefixIcon: const Icon(
+                                                                Icons
+                                                                    .phone_outlined,
+                                                                color: Color(
+                                                                  0xFF1C9826,
+                                                                ),
+                                                              ),
                                                             ),
-                                                            keyboardType: TextInputType.phone,
-                                                            style: GoogleFonts.poppins(fontSize: isMobile ? 14 : 16),
-                                                            validator: _phoneValidator,
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .phone,
+                                                            style:
+                                                                GoogleFonts.poppins(
+                                                                  fontSize:
+                                                                      isMobile
+                                                                      ? 14
+                                                                      : 16,
+                                                                ),
+                                                            validator:
+                                                                _phoneValidator,
                                                           ),
-                                                          const SizedBox(height: 24),
+                                                          const SizedBox(
+                                                            height: 24,
+                                                          ),
                                                           Row(
-                                                            mainAxisAlignment: MainAxisAlignment.end,
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .end,
                                                             children: [
                                                               TextButton(
-                                                                onPressed: _isUpdating ? null : _toggleEditMode,
-                                                                child: Text('Cancel', style: GoogleFonts.poppins()),
+                                                                onPressed:
+                                                                    _isUpdating
+                                                                    ? null
+                                                                    : _toggleEditMode,
+                                                                child: Text(
+                                                                  'Cancel',
+                                                                  style:
+                                                                      GoogleFonts.poppins(),
+                                                                ),
                                                               ),
-                                                              const SizedBox(width: 8),
+                                                              const SizedBox(
+                                                                width: 8,
+                                                              ),
                                                               ElevatedButton(
-                                                                onPressed: _isUpdating ? null : () => _updateProfile(user!.id),
+                                                                onPressed:
+                                                                    _isUpdating
+                                                                    ? null
+                                                                    : () => _updateProfile(
+                                                                        user!
+                                                                            .id,
+                                                                      ),
                                                                 style: ElevatedButton.styleFrom(
-                                                                  backgroundColor: Colors.transparent,
-                                                                  shadowColor: Colors.transparent,
-                                                                  padding: EdgeInsets.zero,
-                                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .transparent,
+                                                                  shadowColor:
+                                                                      Colors
+                                                                          .transparent,
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  shape: RoundedRectangleBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          16,
+                                                                        ),
+                                                                  ),
                                                                 ),
                                                                 child: Ink(
                                                                   decoration: BoxDecoration(
                                                                     gradient: const LinearGradient(
-                                                                      colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
+                                                                      colors: [
+                                                                        Color(
+                                                                          0xFF1C9826,
+                                                                        ),
+                                                                        Color(
+                                                                          0xFF4CAF50,
+                                                                        ),
+                                                                      ],
                                                                     ),
-                                                                    borderRadius: BorderRadius.circular(16),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          16,
+                                                                        ),
                                                                   ),
                                                                   child: Container(
                                                                     padding: EdgeInsets.symmetric(
-                                                                      vertical: isMobile ? 12 : 16,
-                                                                      horizontal: isMobile ? 16 : 24,
+                                                                      vertical:
+                                                                          isMobile
+                                                                          ? 12
+                                                                          : 16,
+                                                                      horizontal:
+                                                                          isMobile
+                                                                          ? 16
+                                                                          : 24,
                                                                     ),
-                                                                    child: _isUpdating
+                                                                    child:
+                                                                        _isUpdating
                                                                         ? const SizedBox(
-                                                                            width: 20,
-                                                                            height: 20,
+                                                                            width:
+                                                                                20,
+                                                                            height:
+                                                                                20,
                                                                             child: CircularProgressIndicator(
                                                                               strokeWidth: 2,
                                                                               color: Colors.white,
                                                                             ),
                                                                           )
-                                                                        : Text('Save', style: GoogleFonts.poppins(color: Colors.white)),
+                                                                        : Text(
+                                                                            'Save',
+                                                                            style: GoogleFonts.poppins(
+                                                                              color: Colors.white,
+                                                                            ),
+                                                                          ),
                                                                   ),
                                                                 ),
                                                               ),
@@ -583,15 +776,42 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                                       ),
                                                     )
                                                   : Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
                                                       children: [
-                                                        _buildProfileField('Email', user?.email ?? 'N/A', isMobile),
-                                                        const SizedBox(height: 12),
-                                                        _buildProfileField('Full Name', user?.userMetadata?['full_name'] ?? 'N/A', isMobile),
-                                                        const SizedBox(height: 12),
-                                                        _buildProfileField('Phone Number', user?.userMetadata?['phone_number'] ?? 'N/A', isMobile),
-                                                        const SizedBox(height: 12),
-                                                        _buildProfileField('Role', user?.userMetadata?['role'] ?? 'N/A', isMobile),
+                                                        _buildProfileField(
+                                                          'Email',
+                                                          user?.email ?? 'N/A',
+                                                          isMobile,
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 12,
+                                                        ),
+                                                        _buildProfileField(
+                                                          'Full Name',
+                                                          user?.userMetadata?['full_name'] ??
+                                                              'N/A',
+                                                          isMobile,
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 12,
+                                                        ),
+                                                        _buildProfileField(
+                                                          'Phone Number',
+                                                          user?.userMetadata?['phone_number'] ??
+                                                              'N/A',
+                                                          isMobile,
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 12,
+                                                        ),
+                                                        _buildProfileField(
+                                                          'Role',
+                                                          user?.userMetadata?['role'] ??
+                                                              'N/A',
+                                                          isMobile,
+                                                        ),
                                                       ],
                                                     ),
                                             ),
@@ -599,94 +819,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 24),
-                                    if (profileStatus is ProfileLoaded)
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: BackdropFilter(
-                                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(0.2),
-                                              borderRadius: BorderRadius.circular(16),
-                                              border: Border.all(color: Colors.white.withOpacity(0.3)),
-                                            ),
-                                            child: Padding(
-                                              padding: EdgeInsets.all(isMobile ? 16 : 24),
-                                              child: isOwner
-                                                  ? Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Text(
-                                                          'Guest House Summary',
-                                                          style: GoogleFonts.poppins(
-                                                            fontSize: isMobile ? 18 : 20,
-                                                            fontWeight: FontWeight.bold,
-                                                            foreground: Paint()
-                                                              ..shader = const LinearGradient(
-                                                                colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
-                                                              ).createShader(const Rect.fromLTWH(0, 0, 200, 20)),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(height: 12),
-                                                        _buildSummaryRow(
-                                                          'Total Listings',
-                                                          profileStatus.guestHouseCount.toString(),
-                                                          Icons.home_outlined,
-                                                          isMobile,
-                                                        ),
-                                                        const SizedBox(height: 12),
-                                                        _buildSummaryRow(
-                                                          'Total Bookings',
-                                                          profileStatus.totalBookings.toString(),
-                                                          Icons.book_outlined,
-                                                          isMobile,
-                                                        ),
-                                                      ],
-                                                    )
-                                                  : Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Text(
-                                                          'Booking Summary',
-                                                          style: GoogleFonts.poppins(
-                                                            fontSize: isMobile ? 18 : 20,
-                                                            fontWeight: FontWeight.bold,
-                                                            foreground: Paint()
-                                                              ..shader = const LinearGradient(
-                                                                colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
-                                                              ).createShader(const Rect.fromLTWH(0, 0, 200, 20)),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(height: 12),
-                                                        _buildSummaryRow(
-                                                          'Upcoming Bookings',
-                                                          profileStatus.upcomingBookings.toString(),
-                                                          Icons.event_outlined,
-                                                          isMobile,
-                                                        ),
-                                                        const SizedBox(height: 12),
-                                                        _buildSummaryRow(
-                                                          'Past Bookings',
-                                                          profileStatus.pastBookings.toString(),
-                                                          Icons.history,
-                                                          isMobile,
-                                                        ),
-                                                        const SizedBox(height: 12),
-                                                        Align(
-                                                          alignment: Alignment.centerLeft,
-                                                          child: TextButton.icon(
-                                                            icon: const Icon(Icons.book, size: 18, color: Color(0xFF1C9826)),
-                                                            label: Text('View Booking History', style: GoogleFonts.poppins()),
-                                                            onPressed: () => Navigator.pushNamed(context, '/bookings'),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
                                   ],
                                 ),
                               ),
@@ -731,7 +863,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, IconData icon, bool isMobile) {
+  Widget _buildSummaryRow(
+    String label,
+    String value,
+    IconData icon,
+    bool isMobile,
+  ) {
     return Row(
       children: [
         Icon(icon, color: const Color(0xFF1C9826), size: isMobile ? 20 : 24),

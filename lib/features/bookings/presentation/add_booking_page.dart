@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:derb/features/bookings/application/bookings_controller.dart';
+import 'package:derb/features/bookings/presentation/widgets/gradient_button.dart';
 import 'package:derb/features/rooms/data/models/room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,10 +29,12 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
   XFile? _receiptImage;
   final String _status = 'pending';
   final _transactionIdController = TextEditingController();
+  final _phoneNumberController = TextEditingController();
 
   @override
   void dispose() {
     _transactionIdController.dispose();
+    _phoneNumberController.dispose();
     super.dispose();
   }
 
@@ -109,11 +112,17 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
   String? _validateForm() {
     if (_startDate == null) return 'Please select a start date.';
     if (_endDate == null) return 'Please select an end date.';
-    if (_endDate!.isBefore(_startDate!))
+    if (_endDate!.isBefore(_startDate!)) {
       return 'End date must be after start date.';
+    }
     if (_idImage == null) return 'Please upload an identification card.';
     if (_receiptImage == null) return 'Please upload a payment receipt.';
     if (_transactionIdController.text.isEmpty) return 'Please enter a transaction ID.';
+    if (_phoneNumberController.text.isEmpty) return 'Please enter a phone number.';
+    final phone = _phoneNumberController.text.trim();
+    if (!RegExp(r'^(?:\+251|0)[79]\d{8}$').hasMatch(phone)) {
+      return 'Please enter a valid Ethiopian phone number (e.g., +251912345678 or 0912345678).';
+    }
     return null;
   }
 
@@ -122,16 +131,8 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isMobile = screenWidth < 600;
     final isTablet = screenWidth >= 600 && screenWidth < 900;
-    final padding = isMobile
-        ? 16.0
-        : isTablet
-        ? 24.0
-        : 32.0;
-    final fontSize = isMobile
-        ? 16.0
-        : isTablet
-        ? 18.0
-        : 20.0;
+    final padding = isMobile ? 16.0 : isTablet ? 24.0 : 32.0;
+    final fontSize = isMobile ? 16.0 : isTablet ? 18.0 : 20.0;
     final authStatus = ref.watch(authControllerProvider);
     final isAuthenticated = authStatus is AuthAuthenticated;
     final tenantId = isAuthenticated ? authStatus.session.user.id : '';
@@ -184,6 +185,8 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    _buildPaymentInformation(fontSize, isMobile, isTablet),
+                    const SizedBox(height: 16),
                     Form(
                       key: _formKey,
                       child: Column(
@@ -206,6 +209,8 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
                             fontSize: fontSize,
                             isMobile: isMobile,
                           ),
+                          const SizedBox(height: 16),
+                          _buildPhoneNumberField(fontSize, isMobile),
                           const SizedBox(height: 16),
                           _buildTransactionIdField(fontSize, isMobile),
                           const SizedBox(height: 16),
@@ -307,15 +312,11 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
   }
 
   Widget _buildRoomPreview(bool isMobile, bool isTablet) {
-    final imgUrl = widget.bedroom.roomPictures![0];
+    final imgUrl = widget.bedroom.roomPictures?.isNotEmpty == true ? widget.bedroom.roomPictures![0] : '';
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        height: isMobile
-            ? 400
-            : isTablet
-            ? 420
-            : 440,
+        height: isMobile ? 200 : isTablet ? 250 : 300,
         width: double.infinity,
         decoration: BoxDecoration(color: Colors.grey[200]),
         child: imgUrl.isNotEmpty
@@ -337,6 +338,123 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
                 color: Colors.grey,
               ),
       ),
+    );
+  }
+
+  Widget _buildPaymentInformation(double fontSize, bool isMobile, bool isTablet) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Payment Information',
+          style: GoogleFonts.poppins(
+            fontSize: fontSize + 2,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // CBE Payment Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CachedNetworkImage(
+                      imageUrl: 'https://example.com/cbe_logo.png', // Replace with actual CBE logo URL or asset
+                      height: isMobile ? 40 : isTablet ? 50 : 60,
+                      width: isMobile ? 40 : isTablet ? 50 : 60,
+                      placeholder: (context, url) => const CircularProgressIndicator(
+                        color: Color(0xFF1C9826),
+                      ),
+                      errorWidget: (context, url, error) => const Icon(
+                        Icons.account_balance,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Commercial Bank of Ethiopia',
+                    style: GoogleFonts.poppins(
+                      fontSize: fontSize - 2,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    'Account Holder: Derb Guest House',
+                    style: GoogleFonts.poppins(
+                      fontSize: fontSize - 4,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  Text(
+                    'Account Number: 1000123456789',
+                    style: GoogleFonts.poppins(
+                      fontSize: fontSize - 4,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Telebirr Payment Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CachedNetworkImage(
+                      imageUrl: 'https://example.com/telebirr_logo.png', // Replace with actual Telebirr logo URL or asset
+                      height: isMobile ? 40 : isTablet ? 50 : 60,
+                      width: isMobile ? 40 : isTablet ? 50 : 60,
+                      placeholder: (context, url) => const CircularProgressIndicator(
+                        color: Color(0xFF1C9826),
+                      ),
+                      errorWidget: (context, url, error) => const Icon(
+                        Icons.payment,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Telebirr',
+                    style: GoogleFonts.poppins(
+                      fontSize: fontSize - 2,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    'Account Holder: Derb Guest House',
+                    style: GoogleFonts.poppins(
+                      fontSize: fontSize - 4,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  Text(
+                    'Account Number: +251912345678',
+                    style: GoogleFonts.poppins(
+                      fontSize: fontSize - 4,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -362,6 +480,35 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
       ),
       trailing: const Icon(Icons.calendar_today, color: Color(0xFF1C9826)),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildPhoneNumberField(double fontSize, bool isMobile) {
+    return TextFormField(
+      controller: _phoneNumberController,
+      decoration: InputDecoration(
+        labelText: 'Phone Number',
+        labelStyle: GoogleFonts.poppins(
+          fontSize: fontSize - 2,
+          color: Colors.grey[600],
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      style: GoogleFonts.poppins(fontSize: fontSize - 2),
+      keyboardType: TextInputType.phone,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(10), // Allows +251 or 0 + 9 digits
+      ],
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter a phone number.';
+        }
+        if (!RegExp(r'^(?:\+251|0)[79]\d{8}$').hasMatch(value)) {
+          return 'Please enter a valid Ethiopian phone number (e.g., +251912345678 or 0912345678).';
+        }
+        return null;
+      },
     );
   }
 
@@ -492,12 +639,9 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
                     return;
                   }
                   final days = _endDate!.difference(_startDate!).inDays;
-                  final totalPrice =
-                      widget.bedroom.price * (days <= 0 ? 1 : days);
+                  final totalPrice = widget.bedroom.price * (days <= 0 ? 1 : days);
                   try {
-                    await ref
-                        .read(bookingsControllerProvider.notifier)
-                        .createBooking(
+                    await ref.read(bookingsControllerProvider.notifier).createBooking(
                           bedroomId: widget.bedroom.id,
                           tenantId: tenantId,
                           startDate: _startDate!,
@@ -506,6 +650,7 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
                           transactionId: _transactionIdController.text,
                           idImage: _idImage!,
                           receiptImage: _receiptImage!,
+                          phoneNumber: _phoneNumberController.text.trim(),
                         );
                     if (context.mounted) {
                       Navigator.pop(context);
@@ -541,9 +686,7 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
                     }
                   }
                 },
-          text: bookingState is BookingsLoading
-              ? 'Submitting...'
-              : 'Submit Booking',
+          text: bookingState is BookingsLoading ? 'Submitting...' : 'Submit Booking',
           isMobile: isMobile,
         );
       },
@@ -572,6 +715,7 @@ class _NewBookingPageState extends ConsumerState<NewBookingPage> {
   }
 }
 
+// Placeholder GradientCard widget (ensure this is defined in your codebase)
 class GradientCard extends StatelessWidget {
   final Widget child;
 
@@ -579,83 +723,23 @@ class GradientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.sizeOf(context).width < 600;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Card(
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  const Color(0xFF1C9826).withOpacity(0.05),
-                  Colors.white.withOpacity(0.9),
-                ],
-              ),
-            ),
-            padding: const EdgeInsets.all(2),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              padding: EdgeInsets.all(isMobile ? 12 : 16),
-              child: child,
-            ),
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.white.withOpacity(0.9),
+            ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class GradientButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final String text;
-  final bool isMobile;
-
-  const GradientButton({
-    super.key,
-    required this.onPressed,
-    required this.text,
-    required this.isMobile,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedScale(
-      scale: onPressed == null ? 0.95 : 1.0,
-      duration: const Duration(milliseconds: 200),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(padding: EdgeInsets.zero),
-        child: Ink(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
-            ),
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 16 : 24,
-              vertical: isMobile ? 12 : 16,
-            ),
-            child: Text(
-              text,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: isMobile ? 14 : 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
+        padding: const EdgeInsets.all(16),
+        child: child,
       ),
     );
   }

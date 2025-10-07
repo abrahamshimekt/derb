@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../data/profile_repository.dart';
 import 'dart:io';
@@ -44,12 +43,9 @@ class ProfileController extends StateNotifier<ProfileState> {
       final isOwner = user.userMetadata?['role'] == 'guest_house_owner';
       if (isOwner) {
         final guestHouseCount = await _repository.getGuestHouseCount(user.id);
-        final totalBookings = await _repository.getTotalBookingsForOwner(user.id);
-        state = ProfileLoaded(guestHouseCount: guestHouseCount, totalBookings: totalBookings);
+        state = ProfileLoaded(guestHouseCount: guestHouseCount);
       } else {
-        final upcomingBookings = await _repository.getUpcomingBookings(user.id);
-        final pastBookings = await _repository.getPastBookings(user.id);
-        state = ProfileLoaded(upcomingBookings: upcomingBookings, pastBookings: pastBookings);
+        state = ProfileLoaded();
       }
     } catch (e) {
       state = ProfileError('Failed to load profile data: $e');
@@ -95,7 +91,8 @@ class ProfileController extends StateNotifier<ProfileState> {
   }
 }
 
-final profileControllerProvider = StateNotifierProvider<ProfileController, ProfileState>((ref) {
-  final repo = ref.watch(profileRepositoryProvider);
-  return ProfileController(repo);
-});
+final profileControllerProvider =
+    StateNotifierProvider<ProfileController, ProfileState>((ref) {
+      final repo = ref.watch(profileRepositoryProvider);
+      return ProfileController(repo);
+    });

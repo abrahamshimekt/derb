@@ -24,7 +24,8 @@ class GuestHouseCard extends StatefulWidget {
   State<GuestHouseCard> createState() => _GuestHouseCardState();
 }
 
-class _GuestHouseCardState extends State<GuestHouseCard> with SingleTickerProviderStateMixin {
+class _GuestHouseCardState extends State<GuestHouseCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
   bool _isHovered = false;
@@ -54,17 +55,33 @@ class _GuestHouseCardState extends State<GuestHouseCard> with SingleTickerProvid
     final cardWidth = widget.isMobile
         ? screenWidth * 0.9
         : widget.isTablet
-            ? screenWidth * 0.45
-            : screenWidth * 0.3;
-    final cardPadding = widget.isMobile ? 12.0 : widget.isTablet ? 16.0 : 20.0;
+        ? screenWidth * 0.45
+        : screenWidth * 0.3;
+    final cardPadding = widget.isMobile
+        ? 12.0
+        : widget.isTablet
+        ? 16.0
+        : 20.0;
     final imageHeight = widget.isMobile
         ? screenWidth * 0.8
         : widget.isTablet
-            ? screenWidth * 0.5
-            : screenWidth * 0.4;
-    final fontSizeTitle = widget.isMobile ? 30.0 : widget.isTablet ? 32.0 : 34.0;
-    final fontSizeSubtitle = widget.isMobile ? 18.0 : widget.isTablet ? 20.0 : 22.0;
-    final iconSize = widget.isMobile ? 16.0 : widget.isTablet ? 18.0 : 20.0;
+        ? screenWidth * 0.5
+        : screenWidth * 0.4;
+    final fontSizeTitle = widget.isMobile
+        ? 30.0
+        : widget.isTablet
+        ? 32.0
+        : 34.0;
+    final fontSizeSubtitle = widget.isMobile
+        ? 18.0
+        : widget.isTablet
+        ? 20.0
+        : 22.0;
+    final iconSize = widget.isMobile
+        ? 16.0
+        : widget.isTablet
+        ? 18.0
+        : 20.0;
 
     return MouseRegion(
       onEnter: (_) {
@@ -82,8 +99,16 @@ class _GuestHouseCardState extends State<GuestHouseCard> with SingleTickerProvid
         },
         onTapUp: (_) {
           _scaleController.reverse();
-          // Navigate to guest house details (future implementation)
-          Navigator.push(context, MaterialPageRoute(builder: (context) => GuestHouseDetailPage(guestHouse: widget.guestHouse, isMobile: widget.isMobile, isTablet: widget.isTablet)));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GuestHouseDetailPage(
+                guestHouse: widget.guestHouse,
+                isMobile: widget.isMobile,
+                isTablet: widget.isTablet,
+              ),
+            ),
+          );
         },
         onTapCancel: () => _scaleController.reverse(),
         child: AnimatedBuilder(
@@ -137,7 +162,11 @@ class _GuestHouseCardState extends State<GuestHouseCard> with SingleTickerProvid
                         children: [
                           _buildImageSection(imageHeight, iconSize),
                           SizedBox(height: cardPadding),
-                          _buildTextSection(fontSizeTitle, fontSizeSubtitle, cardPadding),
+                          _buildTextSection(
+                            fontSizeTitle,
+                            fontSizeSubtitle,
+                            cardPadding,
+                          ),
                           SizedBox(height: cardPadding / 2),
                           _buildFooterSection(fontSizeSubtitle, iconSize),
                         ],
@@ -172,7 +201,9 @@ class _GuestHouseCardState extends State<GuestHouseCard> with SingleTickerProvid
                 ),
               ],
             ),
-            child: widget.guestHouse.pictureUrl != null && widget.guestHouse.pictureUrl!.isNotEmpty
+            child:
+                widget.guestHouse.pictureUrl != null &&
+                    widget.guestHouse.pictureUrl!.isNotEmpty
                 ? CachedNetworkImage(
                     imageUrl: widget.guestHouse.pictureUrl!,
                     fit: BoxFit.cover,
@@ -222,11 +253,7 @@ class _GuestHouseCardState extends State<GuestHouseCard> with SingleTickerProvid
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.star,
-                    size: iconSize,
-                    color: Colors.amber[400],
-                  ),
+                  Icon(Icons.star, size: iconSize, color: Colors.amber[400]),
                   const SizedBox(width: 4),
                   Text(
                     widget.guestHouse.rating!.toStringAsFixed(1),
@@ -244,7 +271,11 @@ class _GuestHouseCardState extends State<GuestHouseCard> with SingleTickerProvid
     );
   }
 
-  Widget _buildTextSection(double fontSizeTitle, double fontSizeSubtitle, double cardPadding) {
+  Widget _buildTextSection(
+    double fontSizeTitle,
+    double fontSizeSubtitle,
+    double cardPadding,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

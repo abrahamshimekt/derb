@@ -21,6 +21,7 @@ abstract class IBookingsRepository {
     String? transactionId,
     required XFile idImage,
     required XFile receiptImage,
+    required String phoneNumber
   });
   Future<List<Booking>> fetchUserBookings(String tenantId);
   Future<List<Booking>> fetchGuestHouseBookings(String ownerId);
@@ -57,10 +58,10 @@ class SupabaseBookingsRepository implements IBookingsRepository {
     String? transactionId,
     required XFile idImage,
     required XFile receiptImage,
+    required String phoneNumber
   }) async {
     try {
       // 1) Validate room exists & is available
-      developer.log('Checking room availability', name: 'bookings.create');
       final room = await _client
           .from('rooms')
           .select('id,status')
@@ -69,7 +70,6 @@ class SupabaseBookingsRepository implements IBookingsRepository {
           .maybeSingle();
 
       if (room == null) {
-        developer.log('Room not available: $bedroomId', name: 'bookings.create');
         throw UnknownFailure('Room is not available or does not exist');
       }
 
@@ -88,12 +88,10 @@ class SupabaseBookingsRepository implements IBookingsRepository {
           .not('status', 'in', ['cancelled', 'checked_out']);
 
       if ((overlaps as List).isNotEmpty) {
-        developer.log('Overlap found: ${overlaps.length}', name: 'bookings.create');
         throw UnknownFailure('Bedroom is already booked for the selected dates');
       }
 
-      // 3) Upload images — path is relative to the bucket (avoid double folder in URL)
-      developer.log('Uploading images', name: 'bookings.create');
+
       final urls = <String>[];
       for (final image in [idImage, receiptImage]) {
         final f = File(image.path);
@@ -102,7 +100,6 @@ class SupabaseBookingsRepository implements IBookingsRepository {
         }
         final fileName =
             '${bedroomId}_${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-        // keep files grouped per-tenant to avoid clutter
         final path = '$tenantId/$fileName';
 
         await _client.storage.from('booking_images').upload(path, f);
@@ -111,8 +108,6 @@ class SupabaseBookingsRepository implements IBookingsRepository {
         urls.add(publicUrl);
       }
 
-      // 4) Insert booking and return the inserted row (no joins here to avoid nulls with RLS)
-      developer.log('Inserting booking row', name: 'bookings.create');
       final inserted = await _client
           .from('bookings')
           .insert({
@@ -126,15 +121,11 @@ class SupabaseBookingsRepository implements IBookingsRepository {
             'id_url': urls[0],
             'payment_reciept_url': urls[1],
             'transaction_id': transactionId,
+            'phone_number':phoneNumber
           })
           .select() 
           .single();
 
-      // 5) Mark room as booked
-      developer.log('Marking room as booked', name: 'bookings.create');
-      await _client.from('rooms').update({'status': 'booked'}).eq('id', bedroomId);
-
-      developer.log('Booking created successfully', name: 'bookings.create');
       return Booking.fromJson(inserted);
     } catch (e) {
       developer.log('Create booking error: $e',

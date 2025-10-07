@@ -41,11 +41,17 @@ class SupabaseRoomsRepository implements IRoomsRepository {
       final response = await _client
           .from('rooms')
           .select()
-          .eq('guest_house_id', guestHouseId);
-      developer.log('Fetch rooms response for guestHouseId $guestHouseId: $response');
+          .eq('guest_house_id', guestHouseId)
+          .eq("status", "available");
+      developer.log(
+        'Fetch rooms XXXX response for guestHouseId $guestHouseId: $response',
+      );
       return response.map((json) => Room.fromJson(json)).toList();
     } catch (e, stackTrace) {
-      developer.log('Error fetching rooms for guestHouseId $guestHouseId: $e', stackTrace: stackTrace);
+      developer.log(
+        'Error fetching rooms for guestHouseId $guestHouseId: $e',
+        stackTrace: stackTrace,
+      );
       throw mapSupabaseError(e);
     }
   }
@@ -59,10 +65,13 @@ class SupabaseRoomsRepository implements IRoomsRepository {
       final List<String> imageUrls = [];
       for (var image in images) {
         final file = File(image.path);
-        final fileName = '${guestHouseId}_${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+        final fileName =
+            '${guestHouseId}_${DateTime.now().millisecondsSinceEpoch}_${image.name}';
         final path = 'guest_house_rooms/$fileName';
         await _client.storage.from('guest_house_rooms').upload(path, file);
-        final url = _client.storage.from('guest_house_rooms').getPublicUrl(path);
+        final url = _client.storage
+            .from('guest_house_rooms')
+            .getPublicUrl(path);
         imageUrls.add(url);
       }
       return imageUrls;
@@ -84,7 +93,7 @@ class SupabaseRoomsRepository implements IRoomsRepository {
     try {
       await _client.from('rooms').insert({
         'guest_house_id': guestHouseId,
-        'room_number':roomNumber,
+        'room_number': roomNumber,
         'price': price,
         'status': status,
         'facilities': facilities,
@@ -99,7 +108,9 @@ class SupabaseRoomsRepository implements IRoomsRepository {
           .from('guest_houses')
           .update({'number_of_rooms': roomCount.count})
           .eq('id', guestHouseId);
-      developer.log('Updated guest house $guestHouseId with number_of_rooms: ${roomCount.count}');
+      developer.log(
+        'Updated guest house $guestHouseId with number_of_rooms: ${roomCount.count}',
+      );
     } catch (e, stackTrace) {
       developer.log('Error creating room: $e', stackTrace: stackTrace);
       throw mapSupabaseError(e);
@@ -111,26 +122,23 @@ class SupabaseRoomsRepository implements IRoomsRepository {
     required String guestHouseId,
     required void Function(List<Room> rooms) onUpdate,
   }) {
-    // IMPORTANT: filter with .eq instead of putting it in the table string.
     _subscription = _client
         .from('rooms')
         .stream(primaryKey: ['id'])
         .eq('guest_house_id', guestHouseId)
         .listen(
-      (data) {
-        try {
-          final rooms = data
-              .map((e) => Room.fromJson(e))
-              .toList();
-          onUpdate(rooms);
-        } catch (e) {
-          developer.log('Rooms stream parse error: $e');
-        }
-      },
-      onError: (err) {
-        developer.log('Rooms stream error: $err');
-      },
-    );
+          (data) {
+            try {
+              final rooms = data.map((e) => Room.fromJson(e)).toList();
+              onUpdate(rooms);
+            } catch (e) {
+              developer.log('Rooms stream parse error: $e');
+            }
+          },
+          onError: (err) {
+            developer.log('Rooms stream error: $err');
+          },
+        );
   }
 
   @override
@@ -143,20 +151,25 @@ class SupabaseRoomsRepository implements IRoomsRepository {
   Failure mapSupabaseError(dynamic error) {
     developer.log('Mapping error: $error');
     if (error is PostgrestException) {
-      if (error.code == '42501' || error.message.contains('permission denied')) {
+      if (error.code == '42501' ||
+          error.message.contains('permission denied')) {
         return AuthFailure('Permission denied: Please sign in again.');
       }
       if (error.code == '42601' || error.message.contains('syntax error')) {
         return UnknownFailure('Database query syntax error: ${error.message}');
       }
-      if (error.message.toLowerCase().contains('network') || error.message.toLowerCase().contains('timeout')) {
+      if (error.message.toLowerCase().contains('network') ||
+          error.message.toLowerCase().contains('timeout')) {
         return NetworkFailure('Network error: Please check your connection.');
       }
       return UnknownFailure('Database error: ${error.message}');
     }
     if (error is StorageException) {
-      if (error.message.toLowerCase().contains('network') || error.message.toLowerCase().contains('timeout')) {
-        return NetworkFailure('Network error during file upload: ${error.message}');
+      if (error.message.toLowerCase().contains('network') ||
+          error.message.toLowerCase().contains('timeout')) {
+        return NetworkFailure(
+          'Network error during file upload: ${error.message}',
+        );
       }
       return UnknownFailure('Storage error: ${error.message}');
     }
@@ -164,7 +177,8 @@ class SupabaseRoomsRepository implements IRoomsRepository {
       if (error.toLowerCase().contains('network')) {
         return NetworkFailure(error);
       }
-      if (error.toLowerCase().contains('auth') || error.toLowerCase().contains('unauthorized')) {
+      if (error.toLowerCase().contains('auth') ||
+          error.toLowerCase().contains('unauthorized')) {
         return AuthFailure(error);
       }
       if (error.toLowerCase().contains('role')) {
