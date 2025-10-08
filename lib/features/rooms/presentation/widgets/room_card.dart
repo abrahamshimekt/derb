@@ -64,7 +64,6 @@ class RoomCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Room Images
               if (room.roomPictures != null && room.roomPictures!.isNotEmpty)
                 Column(
                   children: [
@@ -152,7 +151,6 @@ class RoomCard extends StatelessWidget {
                   ),
                 ),
               const SizedBox(height: 12),
-              // Room Details
               Text(
                 'Room ${room.roomNumber}',
                 style: GoogleFonts.poppins(
@@ -188,8 +186,8 @@ class RoomCard extends StatelessWidget {
                   ),
                 ),
               const SizedBox(height: 12),
-              // Book Now Button
-              if (!isOwner)
+
+              if (!isOwner && room.status != "booked")
                 Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(

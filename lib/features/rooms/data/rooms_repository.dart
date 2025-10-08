@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'models/room.dart';
 import '../../../core/failures.dart';
 import '../../../core/supabase_client.dart';
 import 'dart:developer' as developer;
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 abstract class IRoomsRepository {
   Future<List<Room>> fetchRooms({required String guestHouseId});
@@ -41,10 +41,9 @@ class SupabaseRoomsRepository implements IRoomsRepository {
       final response = await _client
           .from('rooms')
           .select()
-          .eq('guest_house_id', guestHouseId)
-          .eq("status", "available");
+          .eq('guest_house_id', guestHouseId);
       developer.log(
-        'Fetch rooms XXXX response for guestHouseId $guestHouseId: $response',
+        'Fetch rooms response for guestHouseId $guestHouseId: $response',
       );
       return response.map((json) => Room.fromJson(json)).toList();
     } catch (e, stackTrace) {
