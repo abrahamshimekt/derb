@@ -38,7 +38,6 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
       final roomsNotifier = ref.read(roomsControllerProvider.notifier);
       roomsNotifier.fetchRooms(guestHouseId: widget.guestHouse.id);
       roomsNotifier.subscribe(guestHouseId: widget.guestHouse.id);
-      // Trigger fade-in animation
       setState(() {
         _isContentVisible = true;
       });
@@ -325,7 +324,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
 
       if (rooms.isEmpty) {
         return Text(
-          'No available rooms match the filters',
+          'No rooms match the filters',
           style: GoogleFonts.poppins(
             fontSize: fontSizeSubtitle,
             color: Colors.grey[600],
