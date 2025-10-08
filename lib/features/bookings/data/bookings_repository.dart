@@ -4,13 +4,11 @@ import 'dart:developer' as developer;
 import 'package:derb/core/failures.dart';
 import 'package:derb/core/supabase_client.dart';
 import 'package:derb/features/bookings/data/models/booking.dart';
-import 'package:derb/features/rooms/data/models/room.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class IBookingsRepository {
-  Future<List<Room>> fetchAvailableBedrooms(String guestHouseId);
   Future<Booking> createBooking({
     required String bedroomId,
     required String tenantId,
@@ -33,22 +31,7 @@ abstract class IBookingsRepository {
 class SupabaseBookingsRepository implements IBookingsRepository {
   final _client = AppSupabase.client;
 
-  @override
-  Future<List<Room>> fetchAvailableBedrooms(String guestHouseId) async {
-    try {
-      final resp = await _client
-          .from('rooms')
-          .select()
-          .eq('guest_house_id', guestHouseId)
-          .eq('status', 'available');
-
-      return (resp as List)
-          .map<Room>((json) => Room.fromJson(json as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      throw mapSupabaseError(e);
-    }
-  }
+  
 
   @override
   Future<Booking> createBooking({

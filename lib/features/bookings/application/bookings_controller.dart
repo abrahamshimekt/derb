@@ -40,28 +40,7 @@ class BookingsController extends StateNotifier<BookingsStatus> {
 
   final IBookingsRepository _repo;
 
-  Future<void> fetchAvailableBedrooms(String guestHouseId) async {
-    state = const BookingsLoading();
-    try {
-      final bedrooms = await _repo.fetchAvailableBedrooms(guestHouseId);
-      state = BookingsLoaded(bedrooms: bedrooms, userBookings: []);
-    } catch (e, stackTrace) {
-      developer.log('Fetch bedrooms error: $e', stackTrace: stackTrace);
-      if (e is NetworkFailure) {
-        state = const BookingsError(
-          message: 'Network error. Please check your connection.',
-          isNetworkError: true,
-        );
-      } else if (e is AuthFailure) {
-        state = const BookingsError(
-          message: 'Authentication error. Please sign in again.',
-          isAuthError: true,
-        );
-      } else {
-        state = BookingsError(message: 'Failed to load bedrooms: $e');
-      }
-    }
-  }
+
 
   Future<void> createBooking({
     required String bedroomId,
