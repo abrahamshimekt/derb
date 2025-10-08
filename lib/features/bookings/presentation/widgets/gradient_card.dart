@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 class GradientCard extends StatelessWidget {
   final Widget child;
-
-  const GradientCard({super.key, required this.child});
+  final double? padding;
+  const GradientCard({super.key, required this.child, this.padding});
 
   @override
   Widget build(BuildContext context) {

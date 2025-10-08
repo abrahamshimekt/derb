@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 abstract class IBookingsRepository {
   Future<List<Room>> fetchAvailableBedrooms(String guestHouseId);
   Future<Booking> createBooking({
@@ -25,6 +24,10 @@ abstract class IBookingsRepository {
   });
   Future<List<Booking>> fetchUserBookings(String tenantId);
   Future<List<Booking>> fetchGuestHouseBookings(String ownerId);
+  Future<Booking> approveBooking(String bookingId);
+  Future<Booking> checkInBooking(String bookingId);
+  Future<Booking> checkOutBooking(String bookingId);
+  Future<Booking> cancelBooking(String bookingId);
 }
 
 class SupabaseBookingsRepository implements IBookingsRepository {
@@ -37,7 +40,6 @@ class SupabaseBookingsRepository implements IBookingsRepository {
           .from('rooms')
           .select()
           .eq('guest_house_id', guestHouseId)
-          // using status column per your latest schema
           .eq('status', 'available');
 
       return (resp as List)
@@ -84,13 +86,11 @@ class SupabaseBookingsRepository implements IBookingsRepository {
           .eq('bedroom_id', bedroomId)
           .lte('start_date', endStr)
           .gte('end_date', startStr)
-          // only block if booking is still active
           .not('status', 'in', ['cancelled', 'checked_out']);
 
       if ((overlaps as List).isNotEmpty) {
         throw UnknownFailure('Bedroom is already booked for the selected dates');
       }
-
 
       final urls = <String>[];
       for (final image in [idImage, receiptImage]) {
@@ -121,9 +121,9 @@ class SupabaseBookingsRepository implements IBookingsRepository {
             'id_url': urls[0],
             'payment_reciept_url': urls[1],
             'transaction_id': transactionId,
-            'phone_number':phoneNumber
+            'phone_number': phoneNumber
           })
-          .select() 
+          .select()
           .single();
 
       return Booking.fromJson(inserted);
@@ -176,7 +176,6 @@ class SupabaseBookingsRepository implements IBookingsRepository {
             )
           ''')
           .eq('rooms.guest_houses.owner_id', ownerId)
-          // active-ish states; adjust if you add more
           .not('status', 'in', ['checked_out', 'cancelled']);
 
       if (resp.isEmpty) {
@@ -188,6 +187,87 @@ class SupabaseBookingsRepository implements IBookingsRepository {
           .toList();
     } catch (e) {
       developer.log('Fetch GH bookings error: $e', name: 'bookings.list');
+      throw mapSupabaseError(e);
+    }
+  }
+
+  @override
+  Future<Booking> approveBooking(String bookingId) async {
+    try {
+      final updated = await _client
+          .from('bookings')
+          .update({
+            'status': 'approved',
+            'has_paid': true,
+          })
+          .eq('id', bookingId)
+          .select()
+          .single();
+
+      return Booking.fromJson(updated);
+    } catch (e) {
+      developer.log('Approve booking error: $e',
+          name: 'bookings.approve', stackTrace: StackTrace.current);
+      throw mapSupabaseError(e);
+    }
+  }
+
+  @override
+  Future<Booking> checkInBooking(String bookingId) async {
+    try {
+      final updated = await _client
+          .from('bookings')
+          .update({
+            'status': 'checked_in',
+          })
+          .eq('id', bookingId)
+          .select()
+          .single();
+
+      return Booking.fromJson(updated);
+    } catch (e) {
+      developer.log('Check-in booking error: $e',
+          name: 'bookings.check_in', stackTrace: StackTrace.current);
+      throw mapSupabaseError(e);
+    }
+  }
+
+  @override
+  Future<Booking> checkOutBooking(String bookingId) async {
+    try {
+      final updated = await _client
+          .from('bookings')
+          .update({
+            'status': 'checked_out',
+          })
+          .eq('id', bookingId)
+          .select()
+          .single();
+
+      return Booking.fromJson(updated);
+    } catch (e) {
+      developer.log('Check-out booking error: $e',
+          name: 'bookings.check_out', stackTrace: StackTrace.current);
+      throw mapSupabaseError(e);
+    }
+  }
+
+  @override
+  Future<Booking> cancelBooking(String bookingId) async {
+    try {
+      final updated = await _client
+          .from('bookings')
+          .update({
+            'status': 'cancelled',
+          })
+          .eq('id', bookingId)
+          .select()
+          .single();
+
+      return Booking.fromJson(updated);
+    } catch (e) {
+      developer.log('Cancel booking error: $e',
+          name: 'bookings.cancel', stackTrace: StackTrace.current);
       throw mapSupabaseError(e);
     }
   }

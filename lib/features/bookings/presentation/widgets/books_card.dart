@@ -1,6 +1,9 @@
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:derb/features/bookings/data/models/booking.dart';
+import 'package:derb/features/bookings/presentation/widgets/gradient_card.dart';
+import 'package:derb/features/bookings/presentation/widgets/image_chip.dart';
+import 'package:derb/features/bookings/presentation/widgets/info_row.dart';
 import 'package:derb/features/bookings/presentation/widgets/status_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +15,10 @@ class BooksCard extends StatelessWidget {
   final Booking booking;
   final bool isMobile;
   final bool isTablet;
+  final VoidCallback? onApprove;  // New callback for approve action
+  final VoidCallback? onCheckIn;  // New callback for check-in action
+  final VoidCallback? onCheckOut; // New callback for check-out action
+  final VoidCallback? onCancel;   // New callback for cancel action
 
   const BooksCard({
     super.key,
@@ -19,14 +26,30 @@ class BooksCard extends StatelessWidget {
     required this.booking,
     required this.isMobile,
     required this.isTablet,
+    this.onApprove,
+    this.onCheckIn,
+    this.onCheckOut,
+    this.onCancel,
   });
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final padding = isMobile ? 16.0 : isTablet ? 20.0 : 24.0;
-    final fontSize = isMobile ? 15.0 : isTablet ? 17.0 : 19.0;
-    final imageHeight = isMobile ? 160.0 : isTablet ? 200.0 : 240.0;
+    final padding = isMobile
+        ? 16.0
+        : isTablet
+        ? 20.0
+        : 24.0;
+    final fontSize = isMobile
+        ? 15.0
+        : isTablet
+        ? 17.0
+        : 19.0;
+    final imageHeight = isMobile
+        ? 160.0
+        : isTablet
+        ? 200.0
+        : 240.0;
 
     final String roomNumber = booking.roomNumber ?? 'Unknown';
     final String guestHouseName = booking.guestHouseName ?? 'Unknown';
@@ -47,7 +70,8 @@ class BooksCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Room Images Gallery
-              if (booking.roomPictures != null && booking.roomPictures!.isNotEmpty)
+              if (booking.roomPictures != null &&
+                  booking.roomPictures!.isNotEmpty)
                 SizedBox(
                   height: imageHeight,
                   child: ListView.builder(
@@ -58,12 +82,18 @@ class BooksCard extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: GestureDetector(
-                          onTap: () => _showImageDialog(context, booking.roomPictures![index]),
+                          onTap: () => _showImageDialog(
+                            context,
+                            booking.roomPictures![index],
+                          ),
                           child: Container(
                             width: imageHeight * 1.6,
                             decoration: BoxDecoration(
                               color: Colors.grey[100],
-                              border: Border.all(color: Colors.grey[200]!, width: 1.5),
+                              border: Border.all(
+                                color: Colors.grey[200]!,
+                                width: 1.5,
+                              ),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
@@ -131,49 +161,49 @@ class BooksCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _InfoRow(
+                    InfoRow(
                       icon: Icons.hotel,
                       label: 'Guest House',
                       value: guestHouseName,
                       fontSize: fontSize,
                     ),
                     const SizedBox(height: 8),
-                    _InfoRow(
+                    InfoRow(
                       icon: Icons.location_city,
                       label: 'City',
                       value: city,
                       fontSize: fontSize,
                     ),
                     const SizedBox(height: 8),
-                    _InfoRow(
+                    InfoRow(
                       icon: Icons.map,
                       label: 'Sub-City',
                       value: subCity,
                       fontSize: fontSize,
                     ),
                     const SizedBox(height: 8),
-                    _InfoRow(
+                    InfoRow(
                       icon: Icons.door_front_door,
                       label: 'Room Number',
                       value: roomNumber,
                       fontSize: fontSize,
                     ),
                     const SizedBox(height: 8),
-                    _InfoRow(
+                    InfoRow(
                       icon: Icons.calendar_today,
                       label: 'From',
                       value: formatDate(booking.startDate),
                       fontSize: fontSize,
                     ),
                     const SizedBox(height: 8),
-                    _InfoRow(
+                    InfoRow(
                       icon: Icons.calendar_month,
                       label: 'To',
                       value: formatDate(booking.endDate),
                       fontSize: fontSize,
                     ),
                     const SizedBox(height: 8),
-                    _InfoRow(
+                    InfoRow(
                       icon: Icons.attach_money,
                       label: 'Price',
                       value: '${booking.totalPrice.toStringAsFixed(2)} ETB',
@@ -181,17 +211,34 @@ class BooksCard extends StatelessWidget {
                       textColor: const Color(0xFF1C9826),
                     ),
                     const SizedBox(height: 8),
-                    _InfoRow(
+                    InfoRow(
                       icon: Icons.receipt_long,
                       label: 'Transaction ID',
                       value: ((booking.transactionId?.length ?? 0) > 24)
                           ? '${booking.transactionId!.substring(0, 24)}…'
                           : (booking.transactionId ?? '-'),
                       fontSize: fontSize,
-                      onCopy: booking.transactionId != null && booking.transactionId!.isNotEmpty
-                          ? () => _copy(context, 'Transaction ID', booking.transactionId)
+                      onCopy:
+                          booking.transactionId != null &&
+                              booking.transactionId!.isNotEmpty
+                          ? () => _copy(
+                              context,
+                              'Transaction ID',
+                              booking.transactionId,
+                            )
                           : null,
                     ),
+                    // Add payment status
+                    if (booking.hasPaid)
+                      const SizedBox(height: 8),
+                    if (booking.hasPaid)
+                      InfoRow(
+                        icon: Icons.check_circle,
+                        label: 'Payment Status',
+                        value: 'Paid',
+                        fontSize: fontSize,
+                        textColor: const Color(0xFF1C9826),
+                      ),
                   ],
                 ),
               ),
@@ -203,20 +250,22 @@ class BooksCard extends StatelessWidget {
                 runSpacing: 10,
                 children: [
                   if (booking.idUrl != null && booking.idUrl!.isNotEmpty)
-                    _ImageChip(
+                    ImageChip(
                       label: 'ID Image',
                       imageUrl: booking.idUrl!,
                       imageHeight: isMobile ? 70.0 : 90.0,
                       fontSize: fontSize,
                       onTap: () => _showImageDialog(context, booking.idUrl!),
                     ),
-                  if (booking.paymentReceiptUrl != null && booking.paymentReceiptUrl!.isNotEmpty)
-                    _ImageChip(
+                  if (booking.paymentReceiptUrl != null &&
+                      booking.paymentReceiptUrl!.isNotEmpty)
+                    ImageChip(
                       label: 'Receipt',
                       imageUrl: booking.paymentReceiptUrl!,
                       imageHeight: isMobile ? 70.0 : 90.0,
                       fontSize: fontSize,
-                      onTap: () => _showImageDialog(context, booking.paymentReceiptUrl!),
+                      onTap: () =>
+                          _showImageDialog(context, booking.paymentReceiptUrl!),
                     ),
                 ],
               ),
@@ -238,14 +287,15 @@ class BooksCard extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: ElevatedButton(
-                            onPressed: () {
-                              HapticFeedback.lightImpact();
-                              // TODO: Implement approve booking
-                            },
+                            onPressed: onApprove,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1C9826).withOpacity(0.1),
+                              backgroundColor: const Color(0xFF1C9826)
+                                  .withOpacity(0.1),
                               foregroundColor: const Color(0xFF1C9826),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -260,16 +310,69 @@ class BooksCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                      if (booking.status.toLowerCase() == 'pending')
+                      if (booking.status.toLowerCase() == 'approved' && isOwner)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ElevatedButton(
+                            onPressed: onCheckIn,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1C9826)
+                                  .withOpacity(0.1),
+                              foregroundColor: const Color(0xFF1C9826),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              'Check In',
+                              style: GoogleFonts.poppins(
+                                fontSize: fontSize - 2,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (booking.status.toLowerCase() == 'checked_in' && isOwner)
                         ElevatedButton(
-                          onPressed: () {
-                            HapticFeedback.lightImpact();
-                            // TODO: Implement cancel booking
-                          },
+                          onPressed: onCheckOut,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1C9826)
+                                .withOpacity(0.1),
+                            foregroundColor: const Color(0xFF1C9826),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'Check Out',
+                            style: GoogleFonts.poppins(
+                              fontSize: fontSize - 2,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      if (booking.status.toLowerCase() != 'checked_in' &&
+                          booking.status.toLowerCase() != 'checked_out' &&
+                          booking.status.toLowerCase() != 'cancelled')
+                        ElevatedButton(
+                          onPressed: onCancel,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.redAccent.withOpacity(0.1),
                             foregroundColor: Colors.redAccent,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -310,7 +413,9 @@ class BooksCard extends StatelessWidget {
           ),
           backgroundColor: const Color(0xFF1C9826),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           duration: const Duration(seconds: 2),
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -371,6 +476,7 @@ class BooksCard extends StatelessWidget {
     switch (status.toLowerCase()) {
       case 'confirmed':
       case 'checked_in':
+      case 'approved':
         return const Color(0xFF1C9826);
       case 'pending':
         return Colors.amber[700]!;
@@ -380,185 +486,5 @@ class BooksCard extends StatelessWidget {
       default:
         return Colors.grey[600]!;
     }
-  }
-}
-
-class GradientCard extends StatelessWidget {
-  final Widget child;
-  final double padding;
-
-  const GradientCard({
-    super.key,
-    required this.child,
-    this.padding = 16.0,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 6,
-      shadowColor: Colors.black.withOpacity(0.15),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              const Color(0xFF1C9826).withOpacity(0.05),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: EdgeInsets.all(padding),
-        child: child,
-      ),
-    );
-  }
-}
-
-class _ImageChip extends StatelessWidget {
-  final String label;
-  final String imageUrl;
-  final double imageHeight;
-  final double fontSize;
-  final VoidCallback onTap;
-
-  const _ImageChip({
-    required this.label,
-    required this.imageUrl,
-    required this.imageHeight,
-    required this.fontSize,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                width: imageHeight * 0.85,
-                height: imageHeight * 0.85,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF1C9826),
-                    strokeWidth: 2,
-                  ),
-                ),
-                errorWidget: (context, url, error) => const Icon(
-                  Icons.broken_image,
-                  size: 28,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: fontSize - 3,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final double fontSize;
-  final Color? textColor;
-  final VoidCallback? onCopy;
-
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.fontSize,
-    this.textColor,
-    this.onCopy,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: fontSize,
-          color: const Color(0xFF1C9826),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          '$label:',
-          style: GoogleFonts.poppins(
-            fontSize: fontSize - 3,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: fontSize - 3,
-              color: textColor ?? Colors.black54,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (onCopy != null) ...[
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: onCopy,
-            child: const Padding(
-              padding: EdgeInsets.all(2.0),
-              child: Icon(
-                Icons.copy,
-                size: 16,
-                color: Color(0xFF1C9826),
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
   }
 }

@@ -153,9 +153,9 @@ class _BooksPageState extends ConsumerState<BooksPage> {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          padding: EdgeInsets.zero,
+          backgroundColor: const Color(0xFF1C9826), // Default color for buttons
+          foregroundColor: Colors.white, // Ensure text/icon is white
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -163,6 +163,7 @@ class _BooksPageState extends ConsumerState<BooksPage> {
             fontSize: isMobile ? 14 : 16,
             fontWeight: FontWeight.w600,
           ),
+          elevation: 2, // Slight elevation for visibility
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -281,10 +282,24 @@ class _BooksPageState extends ConsumerState<BooksPage> {
               scale: 1.0,
               duration: const Duration(milliseconds: 150),
               child: BooksCard(
-                isOwner:_isOwner,
+                isOwner: _isOwner,
                 booking: bookings[index],
                 isMobile: isMobile,
                 isTablet: isTablet,
+                onApprove: _isOwner && bookings[index].status.toLowerCase() == 'pending'
+                    ? () => ref.read(bookingsControllerProvider.notifier).approveBooking(bookings[index].id)
+                    : null,
+                onCheckIn: _isOwner && bookings[index].status.toLowerCase() == 'approved'
+                    ? () => ref.read(bookingsControllerProvider.notifier).checkInBooking(bookings[index].id)
+                    : null,
+                onCheckOut: _isOwner && bookings[index].status.toLowerCase() == 'checked_in'
+                    ? () => ref.read(bookingsControllerProvider.notifier).checkOutBooking(bookings[index].id)
+                    : null,
+                onCancel: bookings[index].status.toLowerCase() != 'checked_in' &&
+                          bookings[index].status.toLowerCase() != 'checked_out' &&
+                          bookings[index].status.toLowerCase() != 'cancelled'
+                    ? () => ref.read(bookingsControllerProvider.notifier).cancelBooking(bookings[index].id)
+                    : null,
               ),
             ),
           ),
@@ -311,6 +326,20 @@ class _BooksPageState extends ConsumerState<BooksPage> {
               booking: bookings[index],
               isMobile: isMobile,
               isTablet: isTablet,
+              onApprove: _isOwner && bookings[index].status.toLowerCase() == 'pending'
+                  ? () => ref.read(bookingsControllerProvider.notifier).approveBooking(bookings[index].id)
+                  : null,
+              onCheckIn: _isOwner && bookings[index].status.toLowerCase() == 'approved'
+                  ? () => ref.read(bookingsControllerProvider.notifier).checkInBooking(bookings[index].id)
+                  : null,
+              onCheckOut: _isOwner && bookings[index].status.toLowerCase() == 'checked_in'
+                  ? () => ref.read(bookingsControllerProvider.notifier).checkOutBooking(bookings[index].id)
+                  : null,
+              onCancel: bookings[index].status.toLowerCase() != 'checked_in' &&
+                        bookings[index].status.toLowerCase() != 'checked_out' &&
+                        bookings[index].status.toLowerCase() != 'cancelled'
+                  ? () => ref.read(bookingsControllerProvider.notifier).cancelBooking(bookings[index].id)
+                  : null,
             ),
           ),
           childCount: bookings.length,

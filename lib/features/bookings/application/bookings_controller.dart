@@ -85,7 +85,7 @@ class BookingsController extends StateNotifier<BookingsStatus> {
         transactionId: transactionId,
         idImage: idImage,
         receiptImage: receiptImage,
-        phoneNumber:phoneNumber
+        phoneNumber: phoneNumber
       );
       if (state is BookingsLoaded) {
         final current = state as BookingsLoaded;
@@ -160,6 +160,130 @@ class BookingsController extends StateNotifier<BookingsStatus> {
         );
       } else {
         state = BookingsError(message: 'Failed to load bookings: $e');
+      }
+    }
+  }
+
+  Future<void> approveBooking(String bookingId) async {
+    state = const BookingsLoading();
+    try {
+      final updatedBooking = await _repo.approveBooking(bookingId);
+      if (state is BookingsLoaded) {
+        final current = state as BookingsLoaded;
+        state = BookingsLoaded(
+          bedrooms: current.bedrooms,
+          userBookings: current.userBookings
+              .map((b) => b.id == bookingId ? updatedBooking : b)
+              .toList(),
+        );
+      }
+    } catch (e, stackTrace) {
+      developer.log('Approve booking error: $e', stackTrace: stackTrace);
+      if (e is NetworkFailure) {
+        state = const BookingsError(
+          message: 'Network error. Please check your connection.',
+          isNetworkError: true,
+        );
+      } else if (e is AuthFailure) {
+        state = const BookingsError(
+          message: 'Authentication error. Please sign in again.',
+          isAuthError: true,
+        );
+      } else {
+        state = BookingsError(message: 'Failed to approve booking: $e');
+      }
+    }
+  }
+
+  Future<void> checkInBooking(String bookingId) async {
+    state = const BookingsLoading();
+    try {
+      final updatedBooking = await _repo.checkInBooking(bookingId);
+      if (state is BookingsLoaded) {
+        final current = state as BookingsLoaded;
+        state = BookingsLoaded(
+          bedrooms: current.bedrooms,
+          userBookings: current.userBookings
+              .map((b) => b.id == bookingId ? updatedBooking : b)
+              .toList(),
+        );
+      }
+    } catch (e, stackTrace) {
+      developer.log('Check-in booking error: $e', stackTrace: stackTrace);
+      if (e is NetworkFailure) {
+        state = const BookingsError(
+          message: 'Network error. Please check your connection.',
+          isNetworkError: true,
+        );
+      } else if (e is AuthFailure) {
+        state = const BookingsError(
+          message: 'Authentication error. Please sign in again.',
+          isAuthError: true,
+        );
+      } else {
+        state = BookingsError(message: 'Failed to check-in booking: $e');
+      }
+    }
+  }
+
+  Future<void> checkOutBooking(String bookingId) async {
+    state = const BookingsLoading();
+    try {
+      final updatedBooking = await _repo.checkOutBooking(bookingId);
+      if (state is BookingsLoaded) {
+        final current = state as BookingsLoaded;
+        state = BookingsLoaded(
+          bedrooms: current.bedrooms,
+          userBookings: current.userBookings
+              .map((b) => b.id == bookingId ? updatedBooking : b)
+              .toList(),
+        );
+      }
+    } catch (e, stackTrace) {
+      developer.log('Check-out booking error: $e', stackTrace: stackTrace);
+      if (e is NetworkFailure) {
+        state = const BookingsError(
+          message: 'Network error. Please check your connection.',
+          isNetworkError: true,
+        );
+      } else if (e is AuthFailure) {
+        state = const BookingsError(
+          message: 'Authentication error. Please sign in again.',
+          isAuthError: true,
+        );
+      } else {
+        state = BookingsError(message: 'Failed to check-out booking: $e');
+      }
+    }
+  }
+
+  Future<void> cancelBooking(String bookingId) async {
+    state = const BookingsLoading();
+    try {
+      final updatedBooking = await _repo.cancelBooking(bookingId);
+      if (state is BookingsLoaded) {
+        final current = state as BookingsLoaded;
+        state = BookingsLoaded(
+          bedrooms: current.bedrooms,
+          userBookings: current.userBookings
+              .map((b) => b.id == bookingId ? updatedBooking : b)
+              .toList(),
+        );
+      }
+    } catch (e, stackTrace) {
+      developer.log('Cancel booking error: $e', stackTrace: stackTrace);
+      if (e is NetworkFailure) {
+        state = const BookingsError(
+          message: 'Network error. Please check your connection.',
+          isNetworkError: true,
+        );
+      } else if (e is AuthFailure) {
+        state = const BookingsError(
+          message: 'Authentication error. Please sign in again.',
+          isAuthError: true,
+        );
+      } else {
+        state = BookingsError(message: 'Failed to cancel booking: $e');
       }
     }
   }
