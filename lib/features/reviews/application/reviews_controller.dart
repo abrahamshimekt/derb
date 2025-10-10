@@ -6,6 +6,7 @@ import 'package:derb/core/failures.dart';
 import 'dart:developer' as developer;
 
 import 'package:flutter_riverpod/legacy.dart';
+import '../../rooms/application/rooms_controller.dart';
 
 abstract class ReviewsStatus {
   const ReviewsStatus();
@@ -87,12 +88,13 @@ class ReviewsError extends ReviewsStatus {
 
 class ReviewsController extends StateNotifier<ReviewsStatus> {
   final IReviewsRepository _repository;
+  final Ref _ref;
   StreamSubscription<List<Review>>? _subscription;
 
   // simple memo to avoid repeated checks during a session
   final Map<String, bool> _canReviewCache = {};
 
-  ReviewsController(this._repository, Ref ref) : super(const ReviewsInitial());
+  ReviewsController(this._repository, this._ref) : super(const ReviewsInitial());
 
   double _avg(List<Review> reviews) {
     if (reviews.isEmpty) return 0.0;
@@ -145,25 +147,56 @@ class ReviewsController extends StateNotifier<ReviewsStatus> {
     required String comment,
     required double rating,
   }) async {
+    // Store current state for optimistic update
+    final currentState = state;
+    
     try {
       if (!await canAddReview(roomId: roomId, userId: userId)) {
         state = const ReviewsError('You have already reviewed this room.');
         developer.log('User $userId attempted to review room $roomId again');
         return;
       }
+      
       state = const ReviewsLoading();
+      
+      // Create optimistic review
+      final optimisticReview = Review(
+        id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+        roomId: roomId,
+        userId: userId,
+        comment: comment,
+        rating: rating,
+        createdAt: DateTime.now(),
+        userName: 'You', // Will be replaced with actual name from server
+      );
+      
+      // Optimistic update - add review to current list
+      if (currentState is ReviewsLoaded) {
+        final optimisticReviews = [optimisticReview, ...currentState.reviews];
+        final optimisticAverage = _avg(optimisticReviews);
+        state = ReviewsLoaded(optimisticReviews, optimisticAverage);
+        
+        // Optimistically update room rating
+        _ref.read(roomsControllerProvider.notifier).updateRoomRatingOptimistically(roomId, optimisticAverage);
+      }
+      
       await _repository.addReview(
         roomId: roomId,
         userId: userId,
         comment: comment,
         rating: rating,
       );
+      
       // user just reviewed; prevent immediate duplicate
       _canReviewCache[_cacheKey(roomId, userId)] = false;
       await fetchReviews(roomId: roomId);
       developer.log('Review added and refreshed for roomId $roomId');
     } catch (e, stackTrace) {
       developer.log('Error adding review for roomId $roomId: $e', stackTrace: stackTrace);
+      // Revert optimistic updates on error
+      if (currentState is ReviewsLoaded) {
+        state = currentState;
+      }
       if (e is NetworkFailure) {
         state = ReviewsError(e.message, isNetworkError: true);
       } else if (e is AuthFailure) {

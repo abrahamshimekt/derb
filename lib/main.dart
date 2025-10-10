@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/supabase_client.dart';
-import 'core/providers.dart'; 
+import 'core/providers.dart';
+import 'core/auth_state_provider.dart';
 import 'features/auth/application/auth_controller.dart';
 import 'features/auth/presentation/auth_page.dart';
 
@@ -13,6 +14,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await AppSupabase.init(dotenv.env['SUPABASE_URL']!, dotenv.env['SUPABASE_ANON_KEY']!);
+  
+  // Note: Google Maps API key should be configured in platform-specific files
+  // For Android: android/app/src/main/AndroidManifest.xml
+  // For iOS: ios/Runner/AppDelegate.swift
+  
   runApp(const ProviderScope(child: App()));
 }
 
@@ -29,8 +35,8 @@ class _AppState extends ConsumerState<App> {
   void _onItemTapped(int index) {
     setState(() {
       if (_selectedIndex == index) {
-        // Trigger refresh for the current tab
-        ref.read(refreshTriggerProvider(index).notifier).state++;
+        // Trigger refresh for the current tab using the new mechanism
+        ref.read(tabRefreshProvider.notifier).triggerRefresh(index);
       }
       _selectedIndex = index;
     });
@@ -55,6 +61,8 @@ class _AppState extends ConsumerState<App> {
       ),
       home: Consumer(
         builder: (context, ref, child) {
+          final authState = ref.watch(authStateProvider);
+          
           ref.listen(authControllerProvider, (previous, next) {
             if (next is AuthAuthenticated && (previous is! AuthAuthenticated)) {
               setState(() {
@@ -63,16 +71,14 @@ class _AppState extends ConsumerState<App> {
             }
           });
 
-          final status = ref.watch(authControllerProvider);
-
-          return status is AuthAuthenticated
+          return authState.isAuthenticated
               ? Scaffold(
                   body: IndexedStack(
                     index: _selectedIndex,
-                    children: [
-                      GuestHousesPage(key: ValueKey(_selectedIndex == 0 ? ref.watch(refreshTriggerProvider(0)) : 0)),
-                      BooksPage(key: ValueKey(_selectedIndex == 1 ? ref.watch(refreshTriggerProvider(1)) : 0)),
-                      ProfilePage(key: ValueKey(_selectedIndex == 2 ? ref.watch(refreshTriggerProvider(2)) : 0)),
+                    children: const [
+                      GuestHousesPage(),
+                      BooksPage(),
+                      ProfilePage(),
                     ],
                   ),
                   bottomNavigationBar: BottomNavigationBar(

@@ -73,13 +73,59 @@ class SupabaseReviewsRepository implements IReviewsRepository {
     required double rating,
   }) async {
     try {
+      // Insert the review
       await _client.from('reviews').insert({
         'room_id': roomId,
         'user_id': userId,
         'comment': comment,
         'rating': rating,
       });
-      developer.log('Review added for roomId $roomId');
+      
+      // Calculate new average rating for the room
+      final roomReviews = await _client
+          .from('reviews')
+          .select('rating')
+          .eq('room_id', roomId);
+      
+      if (roomReviews.isNotEmpty) {
+        final ratings = (roomReviews as List).map((e) => (e['rating'] as num).toDouble()).toList();
+        final averageRating = ratings.reduce((a, b) => a + b) / ratings.length;
+        
+        // Update room rating
+        await _client
+            .from('rooms')
+            .update({'rating': averageRating})
+            .eq('id', roomId);
+        
+        // Get guest house ID from room
+        final roomData = await _client
+            .from('rooms')
+            .select('guest_house_id')
+            .eq('id', roomId)
+            .single();
+        
+        final guestHouseId = roomData['guest_house_id'] as String;
+        
+        // Calculate new average rating for the guest house (average of all room ratings)
+        final guestHouseRooms = await _client
+            .from('rooms')
+            .select('rating')
+            .eq('guest_house_id', guestHouseId)
+            .not('rating', 'is', null);
+        
+        if (guestHouseRooms.isNotEmpty) {
+          final roomRatings = (guestHouseRooms as List).map((e) => (e['rating'] as num).toDouble()).toList();
+          final guestHouseAverageRating = roomRatings.reduce((a, b) => a + b) / roomRatings.length;
+          
+          // Update guest house rating
+          await _client
+              .from('guest_houses')
+              .update({'rating': guestHouseAverageRating})
+              .eq('id', guestHouseId);
+        }
+      }
+      
+      developer.log('Review added for roomId $roomId and ratings updated');
     } catch (e, stackTrace) {
       developer.log('Error adding review for roomId $roomId: $e', stackTrace: stackTrace);
       throw mapSupabaseError(e);

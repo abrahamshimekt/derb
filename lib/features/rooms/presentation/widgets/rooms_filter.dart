@@ -31,10 +31,10 @@ class _RoomFilterDialogState extends ConsumerState<RoomFilterDialog> {
   @override
   Widget build(BuildContext context) {
     final filter = ref.watch(roomFilterProvider);
-    final minPrice = filter['minPrice'] as double;
-    final maxPrice = filter['maxPrice'] as double;
-    final minRating = filter['minRating'] as double;
-    final maxRating = filter['maxRating'] as double;
+    final minPrice = filter.minPrice;
+    final maxPrice = filter.maxPrice;
+    final minRating = filter.minRating;
+    final maxRating = filter.maxRating;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final fontSize = isMobile ? 14.0 : 16.0;
 
@@ -81,11 +81,10 @@ class _RoomFilterDialogState extends ConsumerState<RoomFilterDialog> {
                   checkmarkColor: Colors.white,
                   onSelected: (selected) {
                     if (selected) {
-                      ref.read(roomFilterProvider.notifier).update((state) => {
-                            ...state,
-                            'minPrice': range['minPrice'],
-                            'maxPrice': range['maxPrice'],
-                          });
+                      ref.read(roomFilterProvider.notifier).updateFilter(
+                        minPrice: range['minPrice'] as double,
+                        maxPrice: range['maxPrice'] as double,
+                      );
                     }
                   },
                 );
@@ -120,11 +119,10 @@ class _RoomFilterDialogState extends ConsumerState<RoomFilterDialog> {
                   checkmarkColor: Colors.white,
                   onSelected: (selected) {
                     if (selected) {
-                      ref.read(roomFilterProvider.notifier).update((state) => {
-                            ...state,
-                            'minRating': range['minRating'],
-                            'maxRating': range['maxRating'],
-                          });
+                      ref.read(roomFilterProvider.notifier).updateFilter(
+                        minRating: range['minRating'] as double,
+                        maxRating: range['maxRating'] as double,
+                      );
                     }
                   },
                 );
@@ -136,12 +134,7 @@ class _RoomFilterDialogState extends ConsumerState<RoomFilterDialog> {
       actions: [
         TextButton(
           onPressed: () {
-            ref.read(roomFilterProvider.notifier).state = {
-              'minPrice': 200.0,
-              'maxPrice': 5000.0,
-              'minRating': 0.0,
-              'maxRating': 5.0,
-            };
+            ref.read(roomFilterProvider.notifier).resetFilter();
             Navigator.of(context).pop();
           },
           child: Text(

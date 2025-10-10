@@ -1,6 +1,5 @@
 import 'package:derb/features/guestHouses/presentation/guest_house_detail_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -94,7 +93,6 @@ class _GuestHouseCardState extends State<GuestHouseCard>
       },
       child: GestureDetector(
         onTapDown: (_) {
-          HapticFeedback.lightImpact();
           _scaleController.forward();
         },
         onTapUp: (_) {
@@ -324,7 +322,7 @@ class _GuestHouseCardState extends State<GuestHouseCard>
 
   Widget _buildFooterSection(double fontSizeSubtitle, double iconSize) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -347,17 +345,6 @@ class _GuestHouseCardState extends State<GuestHouseCard>
               fontWeight: FontWeight.w600,
             ),
           ),
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.favorite_border,
-            size: iconSize,
-            color: Colors.white.withOpacity(0.9),
-          ),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            // Implement favorite toggle (future implementation)
-          },
         ),
       ],
     );

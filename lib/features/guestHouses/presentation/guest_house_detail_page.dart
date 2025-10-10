@@ -4,7 +4,10 @@ import 'package:derb/features/rooms/presentation/widgets/room_card.dart';
 import 'package:derb/features/rooms/presentation/widgets/rooms_filter.dart';
 import 'package:derb/features/rooms/presentation/widgets/rooms_shimmer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../auth/application/auth_controller.dart';
@@ -30,6 +33,8 @@ class GuestHouseDetailPage extends ConsumerStatefulWidget {
 
 class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> with SingleTickerProviderStateMixin {
   bool _isContentVisible = false;
+  final MapController _mapController = MapController();
+  String _selectedMapLayer = 'openstreetmap';
 
   @override
   void initState() {
@@ -38,10 +43,33 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
       final roomsNotifier = ref.read(roomsControllerProvider.notifier);
       roomsNotifier.fetchRooms(guestHouseId: widget.guestHouse.id);
       roomsNotifier.subscribe(guestHouseId: widget.guestHouse.id);
+      
       setState(() {
         _isContentVisible = true;
       });
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  String _getTileLayerUrl(String mapType) {
+    switch (mapType) {
+      case 'satellite':
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      case 'terrain':
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
+      case 'dark':
+        return 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png';
+      case 'light':
+        return 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png';
+      case 'outdoors':
+        return 'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png';
+      default:
+        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
   }
 
   @override
@@ -167,37 +195,42 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: imageHeight,
-              width: double.infinity,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-                child: widget.guestHouse.pictureUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: widget.guestHouse.pictureUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Shimmer.fromColors(
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!,
-                          child: Container(color: Colors.grey[300]),
-                        ),
-                        errorWidget: (context, url, error) => Container(
+            GestureDetector(
+              onTap: widget.guestHouse.pictureUrl != null
+                  ? () => _showFullScreenImage(context, widget.guestHouse.pictureUrl!)
+                  : null,
+              child: SizedBox(
+                height: imageHeight,
+                width: double.infinity,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                  child: widget.guestHouse.pictureUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: widget.guestHouse.pictureUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Shimmer.fromColors(
+                            baseColor: Colors.grey[300]!,
+                            highlightColor: Colors.grey[100]!,
+                            child: Container(color: Colors.grey[300]),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(
+                              Icons.error_outline,
+                              color: Colors.redAccent,
+                              size: 40,
+                            ),
+                          ),
+                        )
+                      : Container(
                           color: Colors.grey[300],
                           child: const Icon(
-                            Icons.error_outline,
-                            color: Colors.redAccent,
+                            Icons.image_not_supported,
+                            color: Colors.grey,
                             size: 40,
                           ),
                         ),
-                      )
-                    : Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
-                          size: 40,
-                        ),
-                      ),
+                ),
               ),
             ),
             Container(
@@ -224,6 +257,21 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
                       color: Colors.grey[600],
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.guestHouse.relativeLocationDescription,
+                    style: GoogleFonts.poppins(
+                      fontSize: fontSizeSubtitle - 1,
+                      color: Colors.grey[700],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSectionTitle('Map Location', fontSizeSubtitle),
+                  const SizedBox(height: 8),
+                  _buildMapLayerSelector(isMobile, isTablet),
+                  const SizedBox(height: 8),
+                  _buildMapSection(isMobile, isTablet),
                   const SizedBox(height: 16),
                   _buildSectionTitle('Description', fontSizeSubtitle),
                   const SizedBox(height: 8),
@@ -245,13 +293,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
                     ),
                   ),
                   if (widget.guestHouse.rating != null)
-                    Text(
-                      'Rating: ${widget.guestHouse.rating!.toStringAsFixed(1)}',
-                      style: GoogleFonts.poppins(
-                        fontSize: fontSizeSubtitle,
-                        color: Colors.grey[600],
-                      ),
-                    ),
+                    _buildGuestHouseRating(widget.guestHouse.rating!, fontSizeSubtitle),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -306,10 +348,10 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
   ) {
     final roomsStatus = ref.watch(roomsControllerProvider);
     final filter = ref.watch(roomFilterProvider);
-    final minPrice = filter['minPrice'] as double;
-    final maxPrice = filter['maxPrice'] as double;
-    final minRating = filter['minRating'] as double;
-    final maxRating = filter['maxRating'] as double;
+    final minPrice = filter.minPrice;
+    final maxPrice = filter.maxPrice;
+    final minRating = filter.minRating;
+    final maxRating = filter.maxRating;
 
     if (roomsStatus is RoomsInitial) {
       return const Text('Initializing...');
@@ -493,6 +535,280 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildGuestHouseRating(double rating, double fontSize) {
+    return Row(
+      children: [
+        Text(
+          'Rating: ',
+          style: GoogleFonts.poppins(
+            fontSize: fontSize,
+            color: Colors.grey[600],
+          ),
+        ),
+        RatingBarIndicator(
+          rating: rating,
+          itemBuilder: (context, _) => const Icon(
+            Icons.star,
+            color: Colors.amber,
+          ),
+          itemCount: 5,
+          itemSize: fontSize + 2,
+          unratedColor: Colors.grey[300],
+        ),
+        const SizedBox(width: 8),
+        Text(
+          rating.toStringAsFixed(1),
+          style: GoogleFonts.poppins(
+            fontSize: fontSize,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMapLayerSelector(bool isMobile, bool isTablet) {
+    final mapLayers = [
+      {'key': 'openstreetmap', 'name': 'Standard', 'icon': Icons.map},
+      {'key': 'satellite', 'name': 'Satellite', 'icon': Icons.satellite},
+      {'key': 'terrain', 'name': 'Terrain', 'icon': Icons.terrain},
+      {'key': 'dark', 'name': 'Dark', 'icon': Icons.dark_mode},
+      {'key': 'light', 'name': 'Light', 'icon': Icons.light_mode},
+      {'key': 'outdoors', 'name': 'Outdoors', 'icon': Icons.hiking},
+    ];
+
+    return Container(
+      height: 50,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: mapLayers.length,
+        itemBuilder: (context, index) {
+          final layer = mapLayers[index];
+          final isSelected = _selectedMapLayer == layer['key'];
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ChoiceChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    layer['icon'] as IconData,
+                    size: 16,
+                    color: isSelected ? Colors.white : const Color(0xFF1C9826),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    layer['name'] as String,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected ? Colors.white : const Color(0xFF1C9826),
+                    ),
+                  ),
+                ],
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() {
+                    _selectedMapLayer = layer['key'] as String;
+                  });
+                }
+              },
+              selectedColor: const Color(0xFF1C9826),
+              backgroundColor: Colors.grey[100],
+              side: BorderSide(
+                color: isSelected ? const Color(0xFF1C9826) : Colors.grey[300]!,
+                width: 1,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMapSection(bool isMobile, bool isTablet) {
+    final mapHeight = isMobile ? 200.0 : isTablet ? 250.0 : 300.0;
+    
+    return Container(
+      height: mapHeight,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
+            initialZoom: 15.0,
+            minZoom: 5.0,
+            maxZoom: 18.0,
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.all,
+            ),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: _getTileLayerUrl(_selectedMapLayer),
+              userAgentPackageName: 'com.example.derb',
+              maxZoom: 18,
+            ),
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
+                  width: 50,
+                  height: 50,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _selectedMapLayer == 'dark' ? Colors.orange : const Color(0xFF1C9826),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _selectedMapLayer == 'dark' ? Colors.white : Colors.white, 
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.5),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.location_on,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+            _buildMapControls(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapControls() {
+    return Positioned(
+      top: 10,
+      right: 10,
+      child: Column(
+        children: [
+          FloatingActionButton.small(
+            onPressed: () {
+              _mapController.move(
+                LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
+                _mapController.camera.zoom,
+              );
+            },
+            backgroundColor: Colors.white,
+            child: const Icon(
+              Icons.my_location,
+              color: Color(0xFF1C9826),
+            ),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton.small(
+            onPressed: () {
+              _mapController.move(
+                LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
+                _mapController.camera.zoom + 2,
+              );
+            },
+            backgroundColor: Colors.white,
+            child: const Icon(
+              Icons.zoom_in,
+              color: Color(0xFF1C9826),
+            ),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton.small(
+            onPressed: () {
+              _mapController.move(
+                LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
+                _mapController.camera.zoom - 2,
+              );
+            },
+            backgroundColor: Colors.white,
+            child: const Icon(
+              Icons.zoom_out,
+              color: Color(0xFF1C9826),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.black87,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.7,
+                width: double.infinity,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(color: Colors.grey[300]),
+                  ),
+                  errorWidget: (context, url, error) => const Icon(
+                    Icons.error_outline,
+                    color: Colors.redAccent,
+                    size: 40,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Close',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

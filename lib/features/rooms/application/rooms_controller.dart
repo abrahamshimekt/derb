@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'package:derb/features/guestHouses/application/guest_houses_controller.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/rooms_repository.dart';
@@ -40,10 +38,8 @@ class RoomsError extends RoomsStatus {
 
 class RoomsController extends StateNotifier<RoomsStatus> {
   final IRoomsRepository _repository;
-  final Ref _ref;
-  StreamSubscription<List<Room>>? _subscription;
 
-  RoomsController(this._repository, this._ref) : super(const RoomsInitial());
+  RoomsController(this._repository) : super(const RoomsInitial());
 
   Future<List<String>> uploadImages({
     required String guestHouseId,
@@ -84,7 +80,6 @@ class RoomsController extends StateNotifier<RoomsStatus> {
         facilities: facilities,
         roomPictures: roomPictures,
       );
-      _ref.invalidate(guestHousesControllerProvider);
     } catch (e, stackTrace) {
       developer.log('Error creating room: $e', stackTrace: stackTrace);
       if (e is NetworkFailure) {
@@ -121,9 +116,34 @@ class RoomsController extends StateNotifier<RoomsStatus> {
     );
   }
 
+  void updateRoomStatusOptimistically(String roomId, String newStatus) {
+    final currentState = state;
+    if (currentState is RoomsLoaded) {
+      final updatedRooms = currentState.rooms.map((room) {
+        if (room.id == roomId) {
+          return room.copyWith(status: newStatus);
+        }
+        return room;
+      }).toList();
+      state = RoomsLoaded(updatedRooms);
+    }
+  }
+
+  void updateRoomRatingOptimistically(String roomId, double newRating) {
+    final currentState = state;
+    if (currentState is RoomsLoaded) {
+      final updatedRooms = currentState.rooms.map((room) {
+        if (room.id == roomId) {
+          return room.copyWith(rating: newRating);
+        }
+        return room;
+      }).toList();
+      state = RoomsLoaded(updatedRooms);
+    }
+  }
+
   @override
   void dispose() {
-    _subscription?.cancel();
     _repository.unsubscribe();
     super.dispose();
   }
@@ -131,5 +151,5 @@ class RoomsController extends StateNotifier<RoomsStatus> {
 
 final roomsControllerProvider =
     StateNotifierProvider<RoomsController, RoomsStatus>(
-      (ref) => RoomsController(ref.read(roomsRepositoryProvider), ref),
+      (ref) => RoomsController(ref.read(roomsRepositoryProvider)),
     );

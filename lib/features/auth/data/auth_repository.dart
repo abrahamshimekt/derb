@@ -13,6 +13,7 @@ abstract class IAuthRepository {
   });
   Future<void> signOut();
   Future<void> sendPasswordResetEmail(String email);
+  Future<void> resetPassword(String newPassword);
   Session? get session;
   Stream<AuthState> onAuthStateChange();
 }
@@ -64,6 +65,15 @@ class SupabaseAuthRepository implements IAuthRepository {
   @override
   Future<void> sendPasswordResetEmail(String email) async {
     await _client.auth.resetPasswordForEmail(email);
+  }
+
+  @override
+  Future<void> resetPassword(String newPassword) async {
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } catch (e) {
+      throw mapSupabaseError(e);
+    }
   }
 
   @override

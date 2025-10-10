@@ -75,6 +75,14 @@ class AuthController extends StateNotifier<AuthStatus> {
           return 'Please enter a valid email address.';
         case 'Weak password':
           return 'Password is too weak. Use at least 6 characters.';
+        case 'Password should be at least 6 characters':
+          return 'Password must be at least 6 characters long.';
+        case 'Unable to validate email address: invalid format':
+          return 'Please enter a valid email address.';
+        case 'User not found':
+          return 'No account found with this email address.';
+        case 'Email rate limit exceeded':
+          return 'Too many requests. Please try again later.';
         default:
           return 'Authentication failed: ${error.message}';
       }
@@ -142,16 +150,22 @@ class AuthController extends StateNotifier<AuthStatus> {
     }
   }
 
-  Future<void> sendPasswordResetEmail() async {
+  Future<void> sendPasswordResetEmail(String email) async {
     state = const AuthLoading();
     try {
-      final email = _repo.session?.user.email;
-      if (email == null) {
-        state = const AuthError('No user logged in');
-        return;
-      }
       await _repo.sendPasswordResetEmail(email);
-      state = AuthAuthenticated(_repo.session!);
+      state = const AuthLoggedOut(); // Return to logged out state after sending email
+    } catch (e, stackTrace) {
+      developer.log('Password reset email error: $e', stackTrace: stackTrace);
+      state = AuthError(_mapSupabaseErrorToMessage(e));
+    }
+  }
+
+  Future<void> resetPassword(String newPassword) async {
+    state = const AuthLoading();
+    try {
+      await _repo.resetPassword(newPassword);
+      state = const AuthLoggedOut(); // Return to logged out state after password reset
     } catch (e, stackTrace) {
       developer.log('Password reset error: $e', stackTrace: stackTrace);
       state = AuthError(_mapSupabaseErrorToMessage(e));

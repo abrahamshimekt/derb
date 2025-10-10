@@ -106,8 +106,21 @@ class SupabaseBookingsRepository implements IBookingsRepository {
             'transaction_id': transactionId,
             'phone_number': phoneNumber
           })
-          .select()
+          .select(r'''
+            *,
+            rooms!bookings_bedroom_id_fkey(
+              room_number,
+              room_pictures,
+              guest_houses!inner(guest_house_name,city, sub_city)
+            )
+          ''')
           .single();
+
+      // Update room status to 'booked' immediately after booking creation
+      await _client
+          .from('rooms')
+          .update({'status': 'booked'})
+          .eq('id', bedroomId);
 
       return Booking.fromJson(inserted);
     } catch (e) {
@@ -184,7 +197,14 @@ class SupabaseBookingsRepository implements IBookingsRepository {
             'has_paid': true,
           })
           .eq('id', bookingId)
-          .select()
+          .select(r'''
+            *,
+            rooms!bookings_bedroom_id_fkey(
+              room_number,
+              room_pictures,
+              guest_houses!inner(guest_house_name,city, sub_city)
+            )
+          ''')
           .single();
 
       return Booking.fromJson(updated);
@@ -204,7 +224,14 @@ class SupabaseBookingsRepository implements IBookingsRepository {
             'status': 'checked_in',
           })
           .eq('id', bookingId)
-          .select()
+          .select(r'''
+            *,
+            rooms!bookings_bedroom_id_fkey(
+              room_number,
+              room_pictures,
+              guest_houses!inner(guest_house_name,city, sub_city)
+            )
+          ''')
           .single();
 
       return Booking.fromJson(updated);
@@ -218,14 +245,34 @@ class SupabaseBookingsRepository implements IBookingsRepository {
   @override
   Future<Booking> checkOutBooking(String bookingId) async {
     try {
+      // First get the booking to find the bedroom_id
+      final booking = await _client
+          .from('bookings')
+          .select('bedroom_id')
+          .eq('id', bookingId)
+          .single();
+
       final updated = await _client
           .from('bookings')
           .update({
             'status': 'checked_out',
           })
           .eq('id', bookingId)
-          .select()
+          .select(r'''
+            *,
+            rooms!bookings_bedroom_id_fkey(
+              room_number,
+              room_pictures,
+              guest_houses!inner(guest_house_name,city, sub_city)
+            )
+          ''')
           .single();
+
+      // Update room status back to 'available' when booking is checked out
+      await _client
+          .from('rooms')
+          .update({'status': 'available'})
+          .eq('id', booking['bedroom_id']);
 
       return Booking.fromJson(updated);
     } catch (e) {
@@ -238,14 +285,34 @@ class SupabaseBookingsRepository implements IBookingsRepository {
   @override
   Future<Booking> cancelBooking(String bookingId) async {
     try {
+      // First get the booking to find the bedroom_id
+      final booking = await _client
+          .from('bookings')
+          .select('bedroom_id')
+          .eq('id', bookingId)
+          .single();
+
       final updated = await _client
           .from('bookings')
           .update({
             'status': 'cancelled',
           })
           .eq('id', bookingId)
-          .select()
+          .select(r'''
+            *,
+            rooms!bookings_bedroom_id_fkey(
+              room_number,
+              room_pictures,
+              guest_houses!inner(guest_house_name,city, sub_city)
+            )
+          ''')
           .single();
+
+      // Update room status back to 'available' when booking is cancelled
+      await _client
+          .from('rooms')
+          .update({'status': 'available'})
+          .eq('id', booking['bedroom_id']);
 
       return Booking.fromJson(updated);
     } catch (e) {

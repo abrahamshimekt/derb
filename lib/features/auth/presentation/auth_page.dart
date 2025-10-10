@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../application/auth_controller.dart';
+import 'forget_password_page.dart';
 
 class AuthPage extends ConsumerStatefulWidget {
   const AuthPage({super.key});
@@ -208,6 +209,23 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                                 validator: _passwordValidator,
                                 autofillHints: const [AutofillHints.password],
                               ),
+                              if (_isSignIn) ...[
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const ForgetPasswordPage(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('Forgot Password?'),
+                                  ),
+                                ),
+                              ],
                               if (!_isSignIn) ...[
                                 const SizedBox(height: 24),
                                 Text(

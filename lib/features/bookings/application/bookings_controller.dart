@@ -1,10 +1,12 @@
 import 'package:derb/features/bookings/data/bookings_repository.dart';
 import 'package:derb/features/bookings/data/models/booking.dart';
 import 'package:derb/features/rooms/data/models/room.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/failures.dart';
 import 'dart:developer' as developer;
+import '../../rooms/application/rooms_controller.dart';
 
 sealed class BookingsStatus {
   const BookingsStatus();
@@ -36,9 +38,26 @@ class BookingsError extends BookingsStatus {
 }
 
 class BookingsController extends StateNotifier<BookingsStatus> {
-  BookingsController(this._repo) : super(const BookingsInitial());
-
   final IBookingsRepository _repo;
+  final Ref _ref;
+
+  BookingsController(this._repo, this._ref) : super(const BookingsInitial());
+
+  BookingsError _mapErrorToBookingsError(dynamic error) {
+    if (error is NetworkFailure) {
+      return const BookingsError(
+        message: 'Network error. Please check your connection.',
+        isNetworkError: true,
+      );
+    } else if (error is AuthFailure) {
+      return const BookingsError(
+        message: 'Authentication error. Please sign in again.',
+        isAuthError: true,
+      );
+    } else {
+      return BookingsError(message: 'An error occurred: $error');
+    }
+  }
 
 
 
@@ -53,7 +72,13 @@ class BookingsController extends StateNotifier<BookingsStatus> {
     required XFile receiptImage,
     required String phoneNumber
   }) async {
+    // Store current state before setting loading
+    final currentState = state;
     state = const BookingsLoading();
+    
+    // Optimistically update room status to 'booked' immediately
+    _ref.read(roomsControllerProvider.notifier).updateRoomStatusOptimistically(bedroomId, 'booked');
+    
     try {
       final booking = await _repo.createBooking(
         bedroomId: bedroomId,
@@ -66,30 +91,21 @@ class BookingsController extends StateNotifier<BookingsStatus> {
         receiptImage: receiptImage,
         phoneNumber: phoneNumber
       );
-      if (state is BookingsLoaded) {
-        final current = state as BookingsLoaded;
+      
+      // Update state immutably - append to existing bookings
+      if (currentState is BookingsLoaded) {
         state = BookingsLoaded(
-          bedrooms: current.bedrooms.where((b) => b.id != bedroomId).toList(),
-          userBookings: [...current.userBookings, booking],
+          bedrooms: currentState.bedrooms.where((b) => b.id != bedroomId).toList(),
+          userBookings: [...currentState.userBookings, booking],
         );
       } else {
         state = BookingsLoaded(bedrooms: [], userBookings: [booking]);
       }
     } catch (e, stackTrace) {
       developer.log('Create booking error: $e', stackTrace: stackTrace);
-      if (e is NetworkFailure) {
-        state = const BookingsError(
-          message: 'Network error. Please check your connection.',
-          isNetworkError: true,
-        );
-      } else if (e is AuthFailure) {
-        state = const BookingsError(
-          message: 'Authentication error. Please sign in again.',
-          isAuthError: true,
-        );
-      } else {
-        state = BookingsError(message: 'Failed to create booking: $e');
-      }
+      // Revert optimistic room status update on error
+      _ref.read(roomsControllerProvider.notifier).updateRoomStatusOptimistically(bedroomId, 'available');
+      state = _mapErrorToBookingsError(e);
       rethrow;
     }
   }
@@ -101,19 +117,7 @@ class BookingsController extends StateNotifier<BookingsStatus> {
       state = BookingsLoaded(bedrooms: [], userBookings: bookings);
     } catch (e, stackTrace) {
       developer.log('Fetch user bookings error: $e', stackTrace: stackTrace);
-      if (e is NetworkFailure) {
-        state = const BookingsError(
-          message: 'Network error. Please check your connection.',
-          isNetworkError: true,
-        );
-      } else if (e is AuthFailure) {
-        state = const BookingsError(
-          message: 'Authentication error. Please sign in again.',
-          isAuthError: true,
-        );
-      } else {
-        state = BookingsError(message: 'Failed to load bookings: $e');
-      }
+      state = _mapErrorToBookingsError(e);
     }
   }
 
@@ -127,148 +131,161 @@ class BookingsController extends StateNotifier<BookingsStatus> {
         'Fetch guest house bookings error: $e',
         stackTrace: stackTrace,
       );
-      if (e is NetworkFailure) {
-        state = const BookingsError(
-          message: 'Network error. Please check your connection.',
-          isNetworkError: true,
-        );
-      } else if (e is AuthFailure) {
-        state = const BookingsError(
-          message: 'Authentication error. Please sign in again.',
-          isAuthError: true,
-        );
-      } else {
-        state = BookingsError(message: 'Failed to load bookings: $e');
-      }
+      state = _mapErrorToBookingsError(e);
     }
   }
 
   Future<void> approveBooking(String bookingId) async {
-    state = const BookingsLoading();
+    final currentState = state;
+    if (currentState is! BookingsLoaded) return;
+    
+    // Optimistic update - immediately update UI
+    final optimisticBooking = currentState.userBookings
+        .firstWhere((b) => b.id == bookingId)
+        .copyWith(status: 'approved');
+    
+    final optimisticBookings = currentState.userBookings
+        .map((b) => b.id == bookingId ? optimisticBooking : b)
+        .toList();
+    
+    state = BookingsLoaded(
+      bedrooms: currentState.bedrooms,
+      userBookings: optimisticBookings,
+    );
+    
     try {
       final updatedBooking = await _repo.approveBooking(bookingId);
-      if (state is BookingsLoaded) {
-        final current = state as BookingsLoaded;
-        state = BookingsLoaded(
-          bedrooms: current.bedrooms,
-          userBookings: current.userBookings
-              .map((b) => b.id == bookingId ? updatedBooking : b)
-              .toList(),
-        );
-      }
+      // Update with actual server response - preserve the current state structure
+      final finalBookings = optimisticBookings
+          .map((b) => b.id == bookingId ? updatedBooking : b)
+          .toList();
+      
+      state = BookingsLoaded(
+        bedrooms: currentState.bedrooms,
+        userBookings: finalBookings,
+      );
     } catch (e, stackTrace) {
       developer.log('Approve booking error: $e', stackTrace: stackTrace);
-      if (e is NetworkFailure) {
-        state = const BookingsError(
-          message: 'Network error. Please check your connection.',
-          isNetworkError: true,
-        );
-      } else if (e is AuthFailure) {
-        state = const BookingsError(
-          message: 'Authentication error. Please sign in again.',
-          isAuthError: true,
-        );
-      } else {
-        state = BookingsError(message: 'Failed to approve booking: $e');
-      }
+      // Revert optimistic update on error
+      state = currentState;
+      state = _mapErrorToBookingsError(e);
     }
   }
 
   Future<void> checkInBooking(String bookingId) async {
-    state = const BookingsLoading();
+    final currentState = state;
+    if (currentState is! BookingsLoaded) return;
+    
+    // Optimistic update - immediately update UI
+    final optimisticBooking = currentState.userBookings
+        .firstWhere((b) => b.id == bookingId)
+        .copyWith(status: 'checked_in');
+    
+    final optimisticBookings = currentState.userBookings
+        .map((b) => b.id == bookingId ? optimisticBooking : b)
+        .toList();
+    
+    state = BookingsLoaded(
+      bedrooms: currentState.bedrooms,
+      userBookings: optimisticBookings,
+    );
+    
     try {
       final updatedBooking = await _repo.checkInBooking(bookingId);
-      if (state is BookingsLoaded) {
-        final current = state as BookingsLoaded;
-        state = BookingsLoaded(
-          bedrooms: current.bedrooms,
-          userBookings: current.userBookings
-              .map((b) => b.id == bookingId ? updatedBooking : b)
-              .toList(),
-        );
-      }
+      // Update with actual server response - preserve the current state structure
+      final finalBookings = optimisticBookings
+          .map((b) => b.id == bookingId ? updatedBooking : b)
+          .toList();
+      
+      state = BookingsLoaded(
+        bedrooms: currentState.bedrooms,
+        userBookings: finalBookings,
+      );
     } catch (e, stackTrace) {
       developer.log('Check-in booking error: $e', stackTrace: stackTrace);
-      if (e is NetworkFailure) {
-        state = const BookingsError(
-          message: 'Network error. Please check your connection.',
-          isNetworkError: true,
-        );
-      } else if (e is AuthFailure) {
-        state = const BookingsError(
-          message: 'Authentication error. Please sign in again.',
-          isAuthError: true,
-        );
-      } else {
-        state = BookingsError(message: 'Failed to check-in booking: $e');
-      }
+      // Revert optimistic update on error
+      state = currentState;
+      state = _mapErrorToBookingsError(e);
     }
   }
 
   Future<void> checkOutBooking(String bookingId) async {
-    state = const BookingsLoading();
+    final currentState = state;
+    if (currentState is! BookingsLoaded) return;
+    
+    // Find the booking to get the bedroom ID for optimistic room status update
+    final booking = currentState.userBookings.firstWhere((b) => b.id == bookingId);
+    
+    // Optimistic update - immediately remove booking from UI and update room status
+    final updatedBookings = currentState.userBookings
+        .where((b) => b.id != bookingId)
+        .toList();
+    
+    state = BookingsLoaded(
+      bedrooms: currentState.bedrooms,
+      userBookings: updatedBookings,
+    );
+    
+    // Optimistically update room status to 'available'
+    _ref.read(roomsControllerProvider.notifier).updateRoomStatusOptimistically(booking.bedroomId, 'available');
+    
     try {
-      final updatedBooking = await _repo.checkOutBooking(bookingId);
-      if (state is BookingsLoaded) {
-        final current = state as BookingsLoaded;
-        state = BookingsLoaded(
-          bedrooms: current.bedrooms,
-          userBookings: current.userBookings
-              .map((b) => b.id == bookingId ? updatedBooking : b)
-              .toList(),
-        );
-      }
+      await _repo.checkOutBooking(bookingId);
+      // Booking is already removed from UI, no need to update state again
+      // The server operation confirms the check-out was successful
     } catch (e, stackTrace) {
       developer.log('Check-out booking error: $e', stackTrace: stackTrace);
-      if (e is NetworkFailure) {
-        state = const BookingsError(
-          message: 'Network error. Please check your connection.',
-          isNetworkError: true,
-        );
-      } else if (e is AuthFailure) {
-        state = const BookingsError(
-          message: 'Authentication error. Please sign in again.',
-          isAuthError: true,
-        );
-      } else {
-        state = BookingsError(message: 'Failed to check-out booking: $e');
-      }
+      // Revert optimistic updates on error - restore the booking and room status
+      _ref.read(roomsControllerProvider.notifier).updateRoomStatusOptimistically(booking.bedroomId, 'booked');
+      state = currentState;
+      state = _mapErrorToBookingsError(e);
     }
   }
 
   Future<void> cancelBooking(String bookingId) async {
-    state = const BookingsLoading();
+    final currentState = state;
+    if (currentState is! BookingsLoaded) return;
+    
+    // Find the booking to get the bedroom ID for optimistic room status update
+    final booking = currentState.userBookings.firstWhere((b) => b.id == bookingId);
+    
+    // Optimistic update - immediately update UI
+    final optimisticBooking = booking.copyWith(status: 'cancelled');
+    
+    final optimisticBookings = currentState.userBookings
+        .map((b) => b.id == bookingId ? optimisticBooking : b)
+        .toList();
+    
+    state = BookingsLoaded(
+      bedrooms: currentState.bedrooms,
+      userBookings: optimisticBookings,
+    );
+    
+    // Optimistically update room status to 'available'
+    _ref.read(roomsControllerProvider.notifier).updateRoomStatusOptimistically(booking.bedroomId, 'available');
+    
     try {
       final updatedBooking = await _repo.cancelBooking(bookingId);
-      if (state is BookingsLoaded) {
-        final current = state as BookingsLoaded;
-        state = BookingsLoaded(
-          bedrooms: current.bedrooms,
-          userBookings: current.userBookings
-              .map((b) => b.id == bookingId ? updatedBooking : b)
-              .toList(),
-        );
-      }
+      // Update with actual server response - preserve the current state structure
+      final finalBookings = optimisticBookings
+          .map((b) => b.id == bookingId ? updatedBooking : b)
+          .toList();
+      
+      state = BookingsLoaded(
+        bedrooms: currentState.bedrooms,
+        userBookings: finalBookings,
+      );
     } catch (e, stackTrace) {
       developer.log('Cancel booking error: $e', stackTrace: stackTrace);
-      if (e is NetworkFailure) {
-        state = const BookingsError(
-          message: 'Network error. Please check your connection.',
-          isNetworkError: true,
-        );
-      } else if (e is AuthFailure) {
-        state = const BookingsError(
-          message: 'Authentication error. Please sign in again.',
-          isAuthError: true,
-        );
-      } else {
-        state = BookingsError(message: 'Failed to cancel booking: $e');
-      }
+      // Revert optimistic updates on error - restore booking and room status
+      _ref.read(roomsControllerProvider.notifier).updateRoomStatusOptimistically(booking.bedroomId, 'booked');
+      state = currentState;
+      state = _mapErrorToBookingsError(e);
     }
   }
 }
 
 final bookingsControllerProvider =
     StateNotifierProvider<BookingsController, BookingsStatus>((ref) {
-      return BookingsController(ref.watch(bookingsRepositoryProvider));
+      return BookingsController(ref.watch(bookingsRepositoryProvider), ref);
     });

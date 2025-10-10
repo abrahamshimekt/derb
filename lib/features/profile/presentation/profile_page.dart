@@ -104,14 +104,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   void _changePassword() {
     HapticFeedback.lightImpact();
     final ctrl = ref.read(authControllerProvider.notifier);
-    ctrl.sendPasswordResetEmail();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Password reset email sent',
-          style: GoogleFonts.poppins(),
-        ),
-        backgroundColor: const Color(0xFF1C9826),
+    final session = ref.read(authRepositoryProvider).session;
+    final userEmail = session?.user.email;
+    
+    if (userEmail != null) {
+      ctrl.sendPasswordResetEmail(userEmail);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Password reset email sent to $userEmail',
+            style: GoogleFonts.poppins(),
+          ),
+          backgroundColor: const Color(0xFF1C9826),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: SnackBarAction(
@@ -121,6 +125,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
         ),
       ),
     );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to get user email',
+            style: GoogleFonts.poppins(),
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
   }
 
   void _confirmDeleteAccount() {

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../application/bookings_controller.dart';
+import '../../../core/auth_state_provider.dart';
 import '../../auth/application/auth_controller.dart';
 
 class BooksPage extends ConsumerStatefulWidget {
@@ -16,10 +17,6 @@ class BooksPage extends ConsumerStatefulWidget {
 }
 
 class _BooksPageState extends ConsumerState<BooksPage> {
-  String? _userId;
-  bool _isTenant = false;
-  bool _isOwner = false;
-
   @override
   void initState() {
     super.initState();
@@ -57,22 +54,14 @@ class _BooksPageState extends ConsumerState<BooksPage> {
 
     // Kick off initial load after first frame so ref reads are safe.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authStatus = ref.read(authControllerProvider);
-      if (authStatus is AuthAuthenticated) {
-        final session = ref.read(authRepositoryProvider).session;
-        _userId = session?.user.id;
-        _isTenant = session?.user.userMetadata?['role'] == 'tenant';
-        _isOwner = session?.user.userMetadata?['role'] == 'guest_house_owner';
-
-        if (_userId != null) {
-          final notifier = ref.read(bookingsControllerProvider.notifier);
-          if (_isTenant) {
-            notifier.fetchUserBookings(_userId!);
-          } else if (_isOwner) {
-            notifier.fetchGuestHouseBookings(_userId!);
-          }
+      final authState = ref.read(authStateProvider);
+      if (authState.isAuthenticated && authState.userId != null) {
+        final notifier = ref.read(bookingsControllerProvider.notifier);
+        if (authState.isTenant) {
+          notifier.fetchUserBookings(authState.userId!);
+        } else if (authState.isOwner) {
+          notifier.fetchGuestHouseBookings(authState.userId!);
         }
-        setState(() {});
       }
     });
   }
@@ -82,6 +71,7 @@ class _BooksPageState extends ConsumerState<BooksPage> {
     final size = MediaQuery.sizeOf(context);
     final isMobile = size.width < 600;
     final isTablet = size.width >= 600 && size.width < 900;
+    final authState = ref.watch(authStateProvider);
 
     return Theme(
       data: _buildTheme(isMobile),
@@ -100,12 +90,10 @@ class _BooksPageState extends ConsumerState<BooksPage> {
             ),
             child: CustomScrollView(
               slivers: [
-                _buildAppBar(isMobile),
+                _buildAppBar(isMobile, authState),
                 SliverToBoxAdapter(child: SizedBox(height: isMobile ? 16 : 24)),
                 ..._buildRoleSlivers(
-                  _userId,
-                  _isTenant,
-                  _isOwner,
+                  authState,
                   isMobile,
                   isTablet,
                 ),
@@ -184,8 +172,8 @@ class _BooksPageState extends ConsumerState<BooksPage> {
     );
   }
 
-  SliverAppBar _buildAppBar(bool isMobile) {
-    final title = _isTenant ? 'My Bookings' : 'Active Guest House Bookings';
+  SliverAppBar _buildAppBar(bool isMobile, AuthState authState) {
+    final title = authState.isTenant ? 'My Bookings' : 'Active Guest House Bookings';
     return SliverAppBar(
       pinned: true,
       backgroundColor: Colors.white.withOpacity(0.9),
@@ -207,15 +195,13 @@ class _BooksPageState extends ConsumerState<BooksPage> {
   }
 
   List<Widget> _buildRoleSlivers(
-    String? userId,
-    bool isTenant,
-    bool isOwner,
+    AuthState authState,
     bool isMobile,
     bool isTablet,
   ) {
     final state = ref.watch(bookingsControllerProvider);
 
-    if (userId == null || (!isTenant && !isOwner)) {
+    if (!authState.isAuthenticated || authState.userId == null || (!authState.isTenant && !authState.isOwner)) {
       return [
         SliverToBoxAdapter(
           child: Center(
@@ -240,7 +226,7 @@ class _BooksPageState extends ConsumerState<BooksPage> {
     }
 
     if (state is BookingsLoaded && state.userBookings.isNotEmpty) {
-      return [_buildBookingListOrGrid(state.userBookings, isMobile, isTablet)];
+      return [_buildBookingListOrGrid(state.userBookings, authState, isMobile, isTablet)];
     }
 
     // Error or empty
@@ -253,10 +239,10 @@ class _BooksPageState extends ConsumerState<BooksPage> {
             isMobile,
             onRetry: () {
               final notifier = ref.read(bookingsControllerProvider.notifier);
-              if (isTenant) {
-                notifier.fetchUserBookings(userId);
+              if (authState.isTenant) {
+                notifier.fetchUserBookings(authState.userId!);
               } else {
-                notifier.fetchGuestHouseBookings(userId);
+                notifier.fetchGuestHouseBookings(authState.userId!);
               }
             },
           ),
@@ -267,6 +253,7 @@ class _BooksPageState extends ConsumerState<BooksPage> {
 
   Widget _buildBookingListOrGrid(
     List<Booking> bookings,
+    AuthState authState,
     bool isMobile,
     bool isTablet,
   ) {
@@ -282,17 +269,17 @@ class _BooksPageState extends ConsumerState<BooksPage> {
               scale: 1.0,
               duration: const Duration(milliseconds: 150),
               child: BooksCard(
-                isOwner: _isOwner,
+                isOwner: authState.isOwner,
                 booking: bookings[index],
                 isMobile: isMobile,
                 isTablet: isTablet,
-                onApprove: _isOwner && bookings[index].status.toLowerCase() == 'pending'
+                onApprove: authState.isOwner && bookings[index].status.toLowerCase() == 'pending'
                     ? () => ref.read(bookingsControllerProvider.notifier).approveBooking(bookings[index].id)
                     : null,
-                onCheckIn: _isOwner && bookings[index].status.toLowerCase() == 'approved'
+                onCheckIn: authState.isOwner && bookings[index].status.toLowerCase() == 'approved'
                     ? () => ref.read(bookingsControllerProvider.notifier).checkInBooking(bookings[index].id)
                     : null,
-                onCheckOut: _isOwner && bookings[index].status.toLowerCase() == 'checked_in'
+                onCheckOut: authState.isOwner && bookings[index].status.toLowerCase() == 'checked_in'
                     ? () => ref.read(bookingsControllerProvider.notifier).checkOutBooking(bookings[index].id)
                     : null,
                 onCancel: bookings[index].status.toLowerCase() != 'checked_in' &&
@@ -322,17 +309,17 @@ class _BooksPageState extends ConsumerState<BooksPage> {
             scale: 1.0,
             duration: const Duration(milliseconds: 150),
             child: BooksCard(
-              isOwner: _isOwner,
+              isOwner: authState.isOwner,
               booking: bookings[index],
               isMobile: isMobile,
               isTablet: isTablet,
-              onApprove: _isOwner && bookings[index].status.toLowerCase() == 'pending'
+              onApprove: authState.isOwner && bookings[index].status.toLowerCase() == 'pending'
                   ? () => ref.read(bookingsControllerProvider.notifier).approveBooking(bookings[index].id)
                   : null,
-              onCheckIn: _isOwner && bookings[index].status.toLowerCase() == 'approved'
+              onCheckIn: authState.isOwner && bookings[index].status.toLowerCase() == 'approved'
                   ? () => ref.read(bookingsControllerProvider.notifier).checkInBooking(bookings[index].id)
                   : null,
-              onCheckOut: _isOwner && bookings[index].status.toLowerCase() == 'checked_in'
+              onCheckOut: authState.isOwner && bookings[index].status.toLowerCase() == 'checked_in'
                   ? () => ref.read(bookingsControllerProvider.notifier).checkOutBooking(bookings[index].id)
                   : null,
               onCancel: bookings[index].status.toLowerCase() != 'checked_in' &&

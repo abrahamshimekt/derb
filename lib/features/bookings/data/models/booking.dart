@@ -115,4 +115,44 @@ class Booking {
 
   String? get primaryImage =>
       (roomPictures != null && roomPictures!.isNotEmpty) ? roomPictures!.first : null;
+
+  Booking copyWith({
+    String? id,
+    String? bedroomId,
+    String? tenantId,
+    DateTime? startDate,
+    DateTime? endDate,
+    double? totalPrice,
+    String? status,
+    DateTime? createdAt,
+    bool? hasPaid,
+    String? idUrl,
+    String? paymentReceiptUrl,
+    String? transactionId,
+    String? roomNumber,
+    List<String>? roomPictures,
+    String? guestHouseName,
+    String? city,
+    String? subCity,
+  }) {
+    return Booking(
+      id: id ?? this.id,
+      bedroomId: bedroomId ?? this.bedroomId,
+      tenantId: tenantId ?? this.tenantId,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      totalPrice: totalPrice ?? this.totalPrice,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      hasPaid: hasPaid ?? this.hasPaid,
+      idUrl: idUrl ?? this.idUrl,
+      paymentReceiptUrl: paymentReceiptUrl ?? this.paymentReceiptUrl,
+      transactionId: transactionId ?? this.transactionId,
+      roomNumber: roomNumber ?? this.roomNumber,
+      roomPictures: roomPictures ?? this.roomPictures,
+      guestHouseName: guestHouseName ?? this.guestHouseName,
+      city: city ?? this.city,
+      subCity: subCity ?? this.subCity,
+    );
+  }
 }

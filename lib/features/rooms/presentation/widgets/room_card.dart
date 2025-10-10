@@ -173,12 +173,41 @@ class RoomCard extends ConsumerWidget {
                   color: Colors.grey[600],
                 ),
               ),
-              Text(
-                'Status: ${room.status}',
-                style: GoogleFonts.poppins(
-                  fontSize: adjustedFontSize - 2,
-                  color: Colors.grey[600],
-                ),
+              Row(
+                children: [
+                  Text(
+                    'Status: ',
+                    style: GoogleFonts.poppins(
+                      fontSize: adjustedFontSize - 2,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: room.status.toLowerCase() == 'available' 
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: room.status.toLowerCase() == 'available' 
+                            ? Colors.green
+                            : Colors.red,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      room.status.toLowerCase() == 'available' ? 'Available' : 'Booked',
+                      style: GoogleFonts.poppins(
+                        fontSize: adjustedFontSize - 3,
+                        fontWeight: FontWeight.w600,
+                        color: room.status.toLowerCase() == 'available' 
+                            ? Colors.green[700]
+                            : Colors.red[700],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               if (room.facilities != null && room.facilities!.isNotEmpty)
                 Padding(
@@ -196,16 +225,8 @@ class RoomCard extends ConsumerWidget {
                 builder: (context, ref, child) {
                   final reviewsState = ref.watch(reviewsControllerProvider(room.id));
                   return reviewsState.when(
-                    initial: () => const SizedBox.shrink(),
-                    loading: () => Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
-                      child: Container(
-                        width: 100,
-                        height: 20,
-                        color: Colors.grey[300],
-                      ),
-                    ),
+                    initial: () => _buildRatingDisplay(room.rating, 0, adjustedFontSize),
+                    loading: () => _buildRatingDisplay(room.rating, 0, adjustedFontSize),
                     loaded: (reviews, averageRating) => Row(
                       children: [
                         RatingBarIndicator(
@@ -229,23 +250,7 @@ class RoomCard extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    error: (message, _, __) => Row(
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.redAccent,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Error',
-                          style: GoogleFonts.poppins(
-                            fontSize: adjustedFontSize - 2,
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                      ],
-                    ),
+                    error: (message, _, __) => _buildRatingDisplay(room.rating, 0, adjustedFontSize),
                   );
                 },
               ),
@@ -348,6 +353,60 @@ class RoomCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRatingDisplay(double rating, int reviewCount, double fontSize) {
+    if (rating == 0) {
+      return Row(
+        children: [
+          RatingBarIndicator(
+            rating: 0,
+            itemBuilder: (context, _) => const Icon(
+              Icons.star_border,
+              color: Colors.grey,
+            ),
+            itemCount: 5,
+            itemSize: fontSize + 2,
+            unratedColor: Colors.grey[300],
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'No ratings yet',
+            style: GoogleFonts.poppins(
+              fontSize: fontSize - 2,
+              color: Colors.grey[500],
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      );
+    }
+    
+    return Row(
+      children: [
+        RatingBarIndicator(
+          rating: rating,
+          itemBuilder: (context, _) => const Icon(
+            Icons.star,
+            color: Colors.amber,
+          ),
+          itemCount: 5,
+          itemSize: fontSize + 2,
+          unratedColor: Colors.grey[300],
+        ),
+        const SizedBox(width: 8),
+        Text(
+          reviewCount > 0 
+            ? '${rating.toStringAsFixed(1)} ($reviewCount)'
+            : rating.toStringAsFixed(1),
+          style: GoogleFonts.poppins(
+            fontSize: fontSize - 2,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 

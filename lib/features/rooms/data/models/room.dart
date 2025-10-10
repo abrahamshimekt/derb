@@ -39,4 +39,28 @@ class Room {
       createdAt: DateTime.parse(json['created_at']),
     );
   }
+
+  Room copyWith({
+    String? id,
+    String? guestHouseId,
+    List<String>? roomPictures,
+    String? roomNumber,
+    double? price,
+    double? rating,
+    String? status,
+    List<String>? facilities,
+    DateTime? createdAt,
+  }) {
+    return Room(
+      id: id ?? this.id,
+      guestHouseId: guestHouseId ?? this.guestHouseId,
+      roomPictures: roomPictures ?? this.roomPictures,
+      roomNumber: roomNumber ?? this.roomNumber,
+      price: price ?? this.price,
+      rating: rating ?? this.rating,
+      status: status ?? this.status,
+      facilities: facilities ?? this.facilities,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

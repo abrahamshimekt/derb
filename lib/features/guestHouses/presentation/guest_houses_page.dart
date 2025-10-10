@@ -1,4 +1,5 @@
 import 'package:derb/core/providers.dart';
+import 'package:derb/core/auth_state_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,7 +11,6 @@ import 'widgets/guest_houses_shimmer.dart';
 import '../application/guest_houses_controller.dart';
 import '../../auth/application/auth_controller.dart';
 import '../data/models/guest_house.dart';
-import 'dart:developer' as developer;
 import 'package:rxdart/rxdart.dart';
 
 class GuestHousesPage extends ConsumerStatefulWidget {
@@ -63,28 +63,31 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
     List<GuestHouse> guestHouses,
     String query,
   ) {
-    var filtered = guestHouses;
-    if (query.isNotEmpty) {
-      final lowercaseQuery = query.toLowerCase();
-      filtered = filtered.where((gh) {
+    // Single-pass filtering for better performance
+    final lowercaseQuery = query.toLowerCase();
+    return guestHouses.where((gh) {
+      // Search query filter
+      if (query.isNotEmpty) {
         final city = gh.city.toLowerCase();
         final subCity = gh.subCity.toLowerCase();
         final guestHouseName = gh.guestHouseName.toLowerCase();
-        return city.contains(lowercaseQuery) ||
+        final matchesSearch = city.contains(lowercaseQuery) ||
             subCity.contains(lowercaseQuery) ||
             guestHouseName.contains(lowercaseQuery);
-      }).toList();
-    }
-    if (_cityFilter != null) {
-      filtered = filtered.where((gh) => gh.city == _cityFilter).toList();
-    }
-    if (_regionFilter != null) {
-      filtered = filtered.where((gh) => gh.region == _regionFilter).toList();
-    }
-    if (_subCityFilter != null) {
-      filtered = filtered.where((gh) => gh.subCity == _subCityFilter).toList();
-    }
-    return filtered;
+        if (!matchesSearch) return false;
+      }
+      
+      // City filter
+      if (_cityFilter != null && gh.city != _cityFilter) return false;
+      
+      // Region filter
+      if (_regionFilter != null && gh.region != _regionFilter) return false;
+      
+      // Sub-city filter
+      if (_subCityFilter != null && gh.subCity != _subCityFilter) return false;
+      
+      return true;
+    }).toList();
   }
 
   List<GuestHouse> _sortGuestHouses(List<GuestHouse> guestHouses) {
@@ -131,11 +134,13 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
     ).then((_) => _filterAnimationController.reverse());
   }
 
-  Future<void> _refreshData(String? userId, String role) async {
-    if (userId != null) {
+  Future<void> _refreshData() async {
+    final authState = ref.read(authStateProvider);
+    if (authState.isAuthenticated && authState.userId != null) {
+      final role = authState.isOwner ? 'guest_house_owner' : 'tenant';
       await ref
           .read(guestHousesControllerProvider.notifier)
-          .fetchGuestHouses(userId: userId, role: role);
+          .fetchGuestHouses(userId: authState.userId, role: role);
     }
   }
 
@@ -224,40 +229,16 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
       ),
       child: Consumer(
         builder: (context, ref, child) {
+          // Watch auth state and guest houses state once
+          final authState = ref.watch(authStateProvider);
+          final guestHousesState = ref.watch(guestHousesControllerProvider);
+          
           // Listen to refresh trigger for tab index 0 (Home)
-          ref.listen(refreshTriggerProvider(0), (previous, next) {
-            final authStatus = ref.read(authControllerProvider);
-            String? userId;
-            String role = 'tenant';
-            if (authStatus is AuthAuthenticated) {
-              userId = authStatus.session.user.id;
-              role =
-                  authStatus.session.user.userMetadata != null &&
-                      authStatus.session.user.userMetadata!.containsKey('role')
-                  ? authStatus.session.user.userMetadata!['role'].toString()
-                  : 'tenant';
-              _refreshData(userId, role);
+          ref.listen(tabRefreshProvider, (previous, next) {
+            if (next.getRefreshCount(0) > (previous?.getRefreshCount(0) ?? 0)) {
+              _refreshData();
             }
           });
-
-          final authStatus = ref.watch(authControllerProvider);
-          String? userId;
-          String role = 'tenant';
-          bool isOwner = false;
-          if (authStatus is AuthAuthenticated) {
-            userId = authStatus.session.user.id;
-            role =
-                authStatus.session.user.userMetadata != null &&
-                    authStatus.session.user.userMetadata!.containsKey('role')
-                ? authStatus.session.user.userMetadata!['role'].toString()
-                : 'tenant';
-            isOwner = role == 'guest_house_owner';
-            if (authStatus.session.user.userMetadata == null) {
-              developer.log(
-                'Warning: userMetadata is null for authenticated user $userId',
-              );
-            }
-          }
 
           return SafeArea(
             child: Scaffold(
@@ -331,13 +312,8 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                             color: const Color(0xFF1C9826),
                                           ),
                                           onPressed: () => _showFilterDialog(
-                                            ref.watch(guestHousesControllerProvider)
-                                                    is GuestHousesLoaded
-                                                ? (ref.watch(
-                                                            guestHousesControllerProvider,
-                                                          )
-                                                          as GuestHousesLoaded)
-                                                      .guestHouses
+                                            guestHousesState is GuestHousesLoaded
+                                                ? guestHousesState.guestHouses
                                                 : [],
                                           ),
                                         ),
@@ -412,9 +388,7 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                     // Scrollable Content
                     Expanded(
                       child: RefreshIndicator(
-                        onRefresh: () {
-                          return _refreshData(userId, role);
-                        },
+                        onRefresh: _refreshData,
                         color: const Color(0xFF1C9826),
                         backgroundColor: Colors.white,
                         child: CustomScrollView(
@@ -424,16 +398,13 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                 horizontal: padding,
                                 vertical: 16,
                               ),
-                              sliver:
-                                  ref.watch(guestHousesControllerProvider)
-                                      is GuestHousesLoading
+                              sliver: guestHousesState is GuestHousesLoading
                                   ? GuestHousesShimmer(
                                       width: MediaQuery.of(context).size.width,
                                       isMobile: isMobile,
                                       isTablet: isTablet,
                                     )
-                                  : ref.watch(guestHousesControllerProvider)
-                                        is GuestHousesError
+                                  : guestHousesState is GuestHousesError
                                   ? SliverToBoxAdapter(
                                       child: Center(
                                         child: Column(
@@ -447,11 +418,7 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                             ),
                                             const SizedBox(height: 16),
                                             Text(
-                                              (ref.watch(
-                                                        guestHousesControllerProvider,
-                                                      )
-                                                      as GuestHousesError)
-                                                  .message,
+                                              guestHousesState.message,
                                               style: GoogleFonts.poppins(
                                                 color: Colors.redAccent,
                                                 fontSize: isMobile ? 14 : 16,
@@ -460,21 +427,20 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                               textAlign: TextAlign.center,
                                             ),
                                             const SizedBox(height: 16),
-                                            if ((ref.watch(
-                                                      guestHousesControllerProvider,
-                                                    )
-                                                    as GuestHousesError)
-                                                .isNetworkError)
+                                            if (guestHousesState.isNetworkError)
                                               ElevatedButton(
-                                                onPressed: () => ref
-                                                    .read(
-                                                      guestHousesControllerProvider
-                                                          .notifier,
-                                                    )
-                                                    .fetchGuestHouses(
-                                                      userId: userId,
-                                                      role: role,
-                                                    ),
+                                                onPressed: () {
+                                                  final role = authState.isOwner ? 'guest_house_owner' : 'tenant';
+                                                  ref
+                                                      .read(
+                                                        guestHousesControllerProvider
+                                                            .notifier,
+                                                      )
+                                                      .fetchGuestHouses(
+                                                        userId: authState.userId,
+                                                        role: role,
+                                                      );
+                                                },
                                                 style: ElevatedButton.styleFrom(
                                                   padding: EdgeInsets.zero,
                                                   shape: RoundedRectangleBorder(
@@ -523,11 +489,7 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                                   ),
                                                 ),
                                               ),
-                                            if ((ref.watch(
-                                                      guestHousesControllerProvider,
-                                                    )
-                                                    as GuestHousesError)
-                                                .isAuthError)
+                                            if (guestHousesState.isAuthError)
                                               ElevatedButton(
                                                 onPressed: () => ref
                                                     .read(
@@ -587,17 +549,12 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                                         ),
                                       ),
                                     )
-                                  : ref.watch(guestHousesControllerProvider)
-                                        is GuestHousesLoaded
+                                  : guestHousesState is GuestHousesLoaded
                                   ? Builder(
                                       builder: (context) {
                                         final filteredGuestHouses =
                                             _filterGuestHouses(
-                                              (ref.watch(
-                                                        guestHousesControllerProvider,
-                                                      )
-                                                      as GuestHousesLoaded)
-                                                  .guestHouses,
+                                              guestHousesState.guestHouses,
                                               _searchController.text.trim(),
                                             );
                                         final sortedGuestHouses =
@@ -738,9 +695,9 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
                   ],
                 ),
               ),
-              floatingActionButton: isOwner && userId != null
+              floatingActionButton: authState.isOwner && authState.userId != null
                   ? FloatingActionButton(
-                      onPressed: () => _showCreateGuestHouseDialog(userId!),
+                      onPressed: () => _showCreateGuestHouseDialog(authState.userId!),
                       elevation: 4,
                       backgroundColor: Colors.transparent,
                       child: Container(
