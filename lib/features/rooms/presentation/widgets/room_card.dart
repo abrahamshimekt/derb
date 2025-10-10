@@ -1,12 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:derb/features/bookings/presentation/add_booking_page.dart';
+import 'package:derb/features/reviews/application/reviews_controller.dart';
+import 'package:derb/features/reviews/presentation/reviews_page.dart';
 import 'package:derb/features/rooms/data/models/room.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class RoomCard extends StatelessWidget {
+class RoomCard extends ConsumerWidget {
   final bool isOwner;
   final Room room;
   final double padding;
@@ -21,27 +26,32 @@ class RoomCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      Navigator.pushReplacementNamed(context, '/login');
+      return const SizedBox.shrink();
+    }
+
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isMobile = screenWidth < 600;
     final isTablet = screenWidth >= 600 && screenWidth < 900;
     final imageHeight = isMobile
         ? screenWidth * 0.8
         : isTablet
-        ? screenWidth * 0.7
-        : screenWidth * 0.5;
+            ? screenWidth * 0.7
+            : screenWidth * 0.5;
     final imageWidth = isMobile
         ? screenWidth * 0.4
         : isTablet
-        ? screenWidth * 0.3
-        : screenWidth * 0.25;
+            ? screenWidth * 0.3
+            : screenWidth * 0.25;
     final adjustedFontSize =
         fontSizeSubtitle *
         (isMobile
             ? 0.9
             : isTablet
-            ? 1.0
-            : 1.1);
+                ? 1.0
+                : 1.1);
     final pageController = PageController();
 
     return Card(
@@ -80,9 +90,7 @@ class RoomCard extends StatelessWidget {
                               imageIndex,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4.0,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: CachedNetworkImage(
@@ -90,27 +98,25 @@ class RoomCard extends StatelessWidget {
                                   width: imageWidth,
                                   height: imageHeight,
                                   fit: BoxFit.cover,
-                                  placeholder: (context, url) =>
-                                      Shimmer.fromColors(
-                                        baseColor: Colors.grey[300]!,
-                                        highlightColor: Colors.grey[100]!,
-                                        child: Container(
-                                          width: imageWidth,
-                                          height: imageHeight,
-                                          color: Colors.grey[300],
-                                        ),
-                                      ),
-                                  errorWidget: (context, url, error) =>
-                                      Container(
-                                        width: imageWidth,
-                                        height: imageHeight,
-                                        color: Colors.grey[300],
-                                        child: const Icon(
-                                          Icons.error_outline,
-                                          color: Colors.redAccent,
-                                          size: 30,
-                                        ),
-                                      ),
+                                  placeholder: (context, url) => Shimmer.fromColors(
+                                    baseColor: Colors.grey[300]!,
+                                    highlightColor: Colors.grey[100]!,
+                                    child: Container(
+                                      width: imageWidth,
+                                      height: imageHeight,
+                                      color: Colors.grey[300],
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) => Container(
+                                    width: imageWidth,
+                                    height: imageHeight,
+                                    color: Colors.grey[300],
+                                    child: const Icon(
+                                      Icons.error_outline,
+                                      color: Colors.redAccent,
+                                      size: 30,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -185,23 +191,81 @@ class RoomCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              const SizedBox(height: 4),
+              Consumer(
+                builder: (context, ref, child) {
+                  final reviewsState = ref.watch(reviewsControllerProvider(room.id));
+                  return reviewsState.when(
+                    initial: () => const SizedBox.shrink(),
+                    loading: () => Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: Container(
+                        width: 100,
+                        height: 20,
+                        color: Colors.grey[300],
+                      ),
+                    ),
+                    loaded: (reviews, averageRating) => Row(
+                      children: [
+                        RatingBarIndicator(
+                          rating: averageRating,
+                          itemBuilder: (context, _) => const Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                          ),
+                          itemCount: 5,
+                          itemSize: adjustedFontSize + 2,
+                          unratedColor: Colors.grey[300],
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${averageRating.toStringAsFixed(1)} (${reviews.length})',
+                          style: GoogleFonts.poppins(
+                            fontSize: adjustedFontSize - 2,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    error: (message, _, __) => Row(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.redAccent,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Error',
+                          style: GoogleFonts.poppins(
+                            fontSize: adjustedFontSize - 2,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 12),
-
-              if (!isOwner && room.status != "booked")
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    onPressed: room.status == "available"
-                        ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    NewBookingPage(bedroom: room),
-                              ),
-                            );
-                          }
-                        : null,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReviewsPage(
+                            roomNumber: room.roomNumber,
+                            roomId: room.id,
+                            isOwner: isOwner,
+                          ),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
@@ -223,7 +287,7 @@ class RoomCard extends StatelessWidget {
                         ),
                         constraints: const BoxConstraints(minWidth: 120),
                         child: Text(
-                          'Book Now',
+                          'View Reviews',
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontSize: adjustedFontSize - 2,
@@ -234,7 +298,52 @@ class RoomCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
+                  if (!isOwner && room.status != "booked")
+                    ElevatedButton(
+                      onPressed: room.status == "available"
+                          ? () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => NewBookingPage(bedroom: room),
+                                ),
+                              );
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1C9826), Color(0xFF4CAF50)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isMobile ? 16 : 20,
+                            vertical: isMobile ? 10 : 12,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 120),
+                          child: Text(
+                            'Book Now',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: adjustedFontSize - 2,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
         ),

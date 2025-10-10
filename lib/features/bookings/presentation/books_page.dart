@@ -414,12 +414,7 @@ class _BooksPageState extends ConsumerState<BooksPage> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          if (onRetry != null)
-            GradientButton(
-              onPressed: onRetry,
-              text: 'Retry',
-              isMobile: isMobile,
-            ),
+         
           if (isAuth)
             GradientButton(
               onPressed: () =>
