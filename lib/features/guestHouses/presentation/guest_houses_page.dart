@@ -697,6 +697,7 @@ class _GuestHousesPageState extends ConsumerState<GuestHousesPage>
               ),
               floatingActionButton: authState.isOwner && authState.userId != null
                   ? FloatingActionButton(
+                      heroTag: "add_guest_house_fab",
                       onPressed: () => _showCreateGuestHouseDialog(authState.userId!),
                       elevation: 4,
                       backgroundColor: Colors.transparent,

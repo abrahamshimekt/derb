@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:derb/features/bookings/data/models/booking.dart';
 import 'package:derb/features/bookings/presentation/widgets/gradient_card.dart';
@@ -7,10 +6,13 @@ import 'package:derb/features/bookings/presentation/widgets/info_row.dart';
 import 'package:derb/features/bookings/presentation/widgets/status_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/auth_state_provider.dart';
+import '../../../auth/application/auth_controller.dart';
 
-class BooksCard extends StatelessWidget {
+class BooksCard extends ConsumerWidget {
   final bool isOwner;
   final Booking booking;
   final bool isMobile;
@@ -33,8 +35,7 @@ class BooksCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+  Widget build(BuildContext context, WidgetRef ref) {
     final padding = isMobile
         ? 16.0
         : isTablet
@@ -58,6 +59,14 @@ class BooksCard extends StatelessWidget {
     final statusColor = _getStatusColor(booking.status);
     String formatDate(DateTime? dt) =>
         dt == null ? '-' : DateFormat('MMM dd, yyyy').format(dt);
+
+    // Get user phone number from auth state
+    final authState = ref.watch(authStateProvider);
+    String userPhoneNumber = 'N/A';
+    if (authState.status is AuthAuthenticated) {
+      final session = (authState.status as AuthAuthenticated).session;
+      userPhoneNumber = session.user.userMetadata?['phone_number']?.toString() ?? 'N/A';
+    }
 
     return GestureDetector(
       onTap: () => HapticFeedback.lightImpact(),
@@ -186,6 +195,13 @@ class BooksCard extends StatelessWidget {
                       icon: Icons.door_front_door,
                       label: 'Room Number',
                       value: roomNumber,
+                      fontSize: fontSize,
+                    ),
+                    const SizedBox(height: 8),
+                    InfoRow(
+                      icon: Icons.phone,
+                      label: 'Phone Number',
+                      value: userPhoneNumber,
                       fontSize: fontSize,
                     ),
                     const SizedBox(height: 8),

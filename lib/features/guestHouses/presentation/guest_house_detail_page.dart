@@ -62,11 +62,11 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
       case 'terrain':
         return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
       case 'dark':
-        return 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png';
+        return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
       case 'light':
-        return 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png';
+        return 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
       case 'outdoors':
-        return 'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png';
+        return 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
       default:
         return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
     }
@@ -502,6 +502,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
 
   Widget _buildAddRoomButton(bool isMobile) {
     return FloatingActionButton(
+      heroTag: "add_room_fab",
       onPressed: () {
         showDialog(
           context: context,
@@ -671,6 +672,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
               urlTemplate: _getTileLayerUrl(_selectedMapLayer),
               userAgentPackageName: 'com.example.derb',
               maxZoom: 18,
+              subdomains: const ['a', 'b', 'c', 'd'],
             ),
             MarkerLayer(
               markers: [
@@ -719,6 +721,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
       child: Column(
         children: [
           FloatingActionButton.small(
+            heroTag: "map_location_fab",
             onPressed: () {
               _mapController.move(
                 LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
@@ -733,6 +736,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
           ),
           const SizedBox(height: 8),
           FloatingActionButton.small(
+            heroTag: "map_zoom_in_fab",
             onPressed: () {
               _mapController.move(
                 LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
@@ -747,6 +751,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
           ),
           const SizedBox(height: 8),
           FloatingActionButton.small(
+            heroTag: "map_zoom_out_fab",
             onPressed: () {
               _mapController.move(
                 LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
