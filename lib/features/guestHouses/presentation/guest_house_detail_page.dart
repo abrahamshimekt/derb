@@ -10,6 +10,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
+import 'widgets/navigation_widget.dart';
+import '../../../../core/navigation_service.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../rooms/application/rooms_controller.dart';
 import '../data/models/guest_house.dart';
@@ -35,6 +37,8 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
   bool _isContentVisible = false;
   final MapController _mapController = MapController();
   String _selectedMapLayer = 'openstreetmap';
+  bool _showNavigation = false;
+  NavigationState? _navigationState;
 
   @override
   void initState() {
@@ -48,6 +52,17 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
         _isContentVisible = true;
       });
     });
+  }
+
+  void _onNavigationStateChanged(NavigationState state) {
+    setState(() {
+      _navigationState = state;
+    });
+    
+    // Update map center to follow user when navigating
+    if (state.isNavigating && state.currentLocation != null) {
+      _mapController.move(state.currentLocation!, _mapController.camera.zoom);
+    }
   }
 
   @override
@@ -583,7 +598,8 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
     ];
 
     return Container(
-      height: 50,
+      height: isMobile ? 45 : 50,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: mapLayers.length,
@@ -592,21 +608,21 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
           final isSelected = _selectedMapLayer == layer['key'];
           
           return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
+            padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
               label: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     layer['icon'] as IconData,
-                    size: 16,
+                    size: isMobile ? 14 : 16,
                     color: isSelected ? Colors.white : const Color(0xFF1C9826),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     layer['name'] as String,
                     style: GoogleFonts.poppins(
-                      fontSize: 12,
+                      fontSize: isMobile ? 11 : 12,
                       fontWeight: FontWeight.w500,
                       color: isSelected ? Colors.white : const Color(0xFF1C9826),
                     ),
@@ -630,6 +646,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
+              elevation: isSelected ? 2 : 0,
             ),
           );
         },
@@ -638,7 +655,7 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
   }
 
   Widget _buildMapSection(bool isMobile, bool isTablet) {
-    final mapHeight = isMobile ? 200.0 : isTablet ? 250.0 : 300.0;
+    final mapHeight = isMobile ? 280.0 : isTablet ? 350.0 : 420.0;
     
     return Container(
       height: mapHeight,
@@ -674,8 +691,20 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
               maxZoom: 18,
               subdomains: const ['a', 'b', 'c', 'd'],
             ),
+            // Route layer (only show when navigating)
+            if (_navigationState?.route != null)
+              PolylineLayer(
+                polylines: [
+                  Polyline(
+                    points: _navigationState!.route!.points,
+                    strokeWidth: 4.0,
+                    color: const Color(0xFF1C9826),
+                  ),
+                ],
+              ),
             MarkerLayer(
               markers: [
+                // Guest house marker
                 Marker(
                   point: LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
                   width: 50,
@@ -703,11 +732,87 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
                     ),
                   ),
                 ),
+                // Current location marker (only show when navigating)
+                if (_navigationState?.currentLocation != null)
+                  Marker(
+                    point: _navigationState!.currentLocation!,
+                    width: 40,
+                    height: 40,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 3,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.5),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ],
         ),
             _buildMapControls(),
+            // Navigation widget overlay
+            if (_showNavigation)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Stack(
+                  children: [
+                    NavigationWidget(
+                      destination: LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
+                      guestHouseName: widget.guestHouse.guestHouseName,
+                      onNavigationStateChanged: _onNavigationStateChanged,
+                    ),
+                    // Cancel button for navigation overlay
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _showNavigation = false;
+                            });
+                          },
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                          tooltip: 'Close Navigation',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -716,52 +821,119 @@ class _GuestHouseDetailPageState extends ConsumerState<GuestHouseDetailPage> wit
 
   Widget _buildMapControls() {
     return Positioned(
-      top: 10,
-      right: 10,
+      top: 12,
+      right: 12,
       child: Column(
         children: [
-          FloatingActionButton.small(
-            heroTag: "map_location_fab",
-            onPressed: () {
-              _mapController.move(
-                LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
-                _mapController.camera.zoom,
-              );
-            },
-            backgroundColor: Colors.white,
-            child: const Icon(
-              Icons.my_location,
-              color: Color(0xFF1C9826),
+          // Navigation Toggle Button
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: FloatingActionButton.small(
+              heroTag: "map_navigation_fab",
+              onPressed: () {
+                setState(() {
+                  _showNavigation = !_showNavigation;
+                });
+              },
+              backgroundColor: _showNavigation ? const Color(0xFF1C9826) : Colors.white,
+              child: Icon(
+                Icons.navigation,
+                color: _showNavigation ? Colors.white : const Color(0xFF1C9826),
+                size: 20,
+              ),
             ),
           ),
           const SizedBox(height: 8),
-          FloatingActionButton.small(
-            heroTag: "map_zoom_in_fab",
-            onPressed: () {
-              _mapController.move(
-                LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
-                _mapController.camera.zoom + 2,
-              );
-            },
-            backgroundColor: Colors.white,
-            child: const Icon(
-              Icons.zoom_in,
-              color: Color(0xFF1C9826),
+          
+          // Location Center Button
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: FloatingActionButton.small(
+              heroTag: "map_location_fab",
+              onPressed: () {
+                _mapController.move(
+                  LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
+                  _mapController.camera.zoom,
+                );
+              },
+              backgroundColor: Colors.white,
+              child: const Icon(
+                Icons.my_location,
+                color: Color(0xFF1C9826),
+                size: 20,
+              ),
             ),
           ),
           const SizedBox(height: 8),
-          FloatingActionButton.small(
-            heroTag: "map_zoom_out_fab",
-            onPressed: () {
-              _mapController.move(
-                LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
-                _mapController.camera.zoom - 2,
-              );
-            },
-            backgroundColor: Colors.white,
-            child: const Icon(
-              Icons.zoom_out,
-              color: Color(0xFF1C9826),
+          
+          // Zoom Controls Container
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                FloatingActionButton.small(
+                  heroTag: "map_zoom_in_fab",
+                  onPressed: () {
+                    _mapController.move(
+                      LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
+                      _mapController.camera.zoom + 1,
+                    );
+                  },
+                  backgroundColor: Colors.white,
+                  child: const Icon(
+                    Icons.add,
+                    color: Color(0xFF1C9826),
+                    size: 18,
+                  ),
+                ),
+                Container(
+                  height: 1,
+                  width: 32,
+                  color: Colors.grey[300],
+                ),
+                FloatingActionButton.small(
+                  heroTag: "map_zoom_out_fab",
+                  onPressed: () {
+                    _mapController.move(
+                      LatLng(widget.guestHouse.latitude, widget.guestHouse.longitude),
+                      _mapController.camera.zoom - 1,
+                    );
+                  },
+                  backgroundColor: Colors.white,
+                  child: const Icon(
+                    Icons.remove,
+                    color: Color(0xFF1C9826),
+                    size: 18,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
